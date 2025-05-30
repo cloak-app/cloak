@@ -1,16 +1,14 @@
-use sqlx::sqlite;
-use std::fs;
+use sqlx::{migrate::MigrateDatabase, sqlite::SqlitePoolOptions, Pool, Sqlite};
+use tauri::{App, Manager};
 
-type Db = Pool<Sqlite>;
+pub mod model;
 
-struct AppState {
-    db: Db,
-}
+pub type Db = Pool<Sqlite>;
 
-async fn setup_db(app: &App) -> Db {
+pub async fn setup_db(app: &App) -> Db {
     let mut path = app.path().app_data_dir().expect("failed to get data_dir");
 
-    match fs::create_dir_all(path.clone()) {
+    match std::fs::create_dir_all(path.clone()) {
         Ok(_) => {}
         Err(err) => {
             panic!("error creating directory {}", err);
@@ -36,5 +34,5 @@ async fn setup_db(app: &App) -> Db {
 
     sqlx::migrate!("./migrations").run(&db).await.unwrap();
 
-    return db;
+    db
 }
