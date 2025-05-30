@@ -6,7 +6,11 @@ use crate::commands::novel;
 use crate::db::setup_db;
 use crate::state::AppState;
 use std::sync::Mutex;
-use tauri::Manager;
+use tauri::{
+    menu::{Menu, MenuItem},
+    tray::TrayIconBuilder,
+    Manager, WebviewUrl, WebviewWindowBuilder,
+};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -16,14 +20,61 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             novel::add_novel,
             novel::get_novel_list,
-            novel::open_novel
+            novel::open_novel,
         ])
         .setup(|app| {
-            tauri::async_runtime::block_on(async move {
+            // 新建数据库连接
+            tauri::async_runtime::block_on(async {
                 let db = setup_db(app).await;
                 app.manage(db);
                 app.manage(Mutex::new(AppState { novel_reader: None }));
             });
+
+            // 注册托盘菜单
+            let quit_i = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
+            let settings_i = MenuItem::with_id(app, "settings", "设置", true, None::<&str>)?;
+            let open_reader_i =
+                MenuItem::with_id(app, "open_reader", "打开阅读器", true, None::<&str>)?;
+
+            let menu = Menu::with_items(app, &[&quit_i, &settings_i, &open_reader_i])?;
+
+            TrayIconBuilder::new()
+                .icon(app.default_window_icon().unwrap().clone())
+                .menu(&menu)
+                .on_menu_event(|app, event| match event.id.as_ref() {
+                    "quit" => {
+                        app.exit(0);
+                    }
+                    "settings" => {
+                        let window = app.get_webview_window("settings");
+                        if let None = window {
+                            WebviewWindowBuilder::new(app, "settings", WebviewUrl::default())
+                                .inner_size(400.0, 200.0)
+                                .build()
+                                .unwrap();
+                        } else {
+                            window.unwrap().set_focus().unwrap();
+                        }
+                    }
+                    "open_reader" => {
+                        let window = app.get_webview_window("reader");
+                        if let None = window {
+                            WebviewWindowBuilder::new(app, "reader", WebviewUrl::default())
+                                .shadow(false)
+                                .transparent(true)
+                                .inner_size(200.0, 100.0)
+                                .build()
+                                .unwrap();
+                        } else {
+                            window.unwrap().set_focus().unwrap();
+                        }
+                    }
+                    _ => {
+                        panic!("menu item {:?} not handled", event.id);
+                    }
+                })
+                .build(app)?;
+
             Ok(())
         })
         .run(tauri::generate_context!())

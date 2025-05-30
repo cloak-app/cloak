@@ -13,7 +13,10 @@
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-dialog": "~2",
     "@tauri-apps/plugin-opener": "^2",
+    "@tauri-apps/plugin-store": "~2",
     "ahooks": "^3.8.5",
+    "clsx": "^2.1.1",
+    "lessline": "^0.0.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
@@ -22,6 +25,7 @@
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
+    "less": "^4.3.0",
     "typescript": "~5.6.2",
     "vite": "^6.0.3"
   }
