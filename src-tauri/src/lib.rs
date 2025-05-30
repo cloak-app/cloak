@@ -6,11 +6,7 @@ use crate::commands::novel;
 use crate::db::setup_db;
 use crate::state::AppState;
 use std::sync::Mutex;
-use tauri::{
-    menu::{Menu, MenuItem},
-    tray::TrayIconBuilder,
-    Manager, WebviewUrl, WebviewWindowBuilder,
-};
+use tauri::{menu::*, tray::TrayIconBuilder, Manager, RunEvent, WebviewUrl, WebviewWindowBuilder};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -23,20 +19,29 @@ pub fn run() {
             novel::open_novel,
         ])
         .setup(|app| {
-            // 新建数据库连接
+            #[cfg(target_os = "macos")]
+            app.set_dock_visibility(false);
+
+            /* --------------------------------- 新建数据库连接 -------------------------------- */
             tauri::async_runtime::block_on(async {
                 let db = setup_db(app).await;
                 app.manage(db);
                 app.manage(Mutex::new(AppState { novel_reader: None }));
             });
 
-            // 注册托盘菜单
-            let quit_i = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
-            let settings_i = MenuItem::with_id(app, "settings", "设置", true, None::<&str>)?;
+            /* --------------------------------- 注册托盘菜单 --------------------------------- */
+
             let open_reader_i =
                 MenuItem::with_id(app, "open_reader", "打开阅读器", true, None::<&str>)?;
+            let settings_i = MenuItem::with_id(app, "settings", "设置", true, None::<&str>)?;
+            let quit_i = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
 
-            let menu = Menu::with_items(app, &[&quit_i, &settings_i, &open_reader_i])?;
+            let menu = MenuBuilder::new(app)
+                .item(&open_reader_i)
+                .item(&settings_i)
+                .separator()
+                .item(&quit_i)
+                .build()?;
 
             TrayIconBuilder::new()
                 .icon(app.default_window_icon().unwrap().clone())
@@ -77,6 +82,13 @@ pub fn run() {
 
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while running tauri application")
+        .run(|_, event| {
+            if let RunEvent::ExitRequested { api, code, .. } = event {
+                if code.is_none() {
+                    api.prevent_exit();
+                }
+            }
+        });
 }

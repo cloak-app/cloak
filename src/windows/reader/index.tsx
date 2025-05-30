@@ -1,5 +1,4 @@
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { getCurrentWebview } from '@tauri-apps/api/webview';
 import clsx from 'clsx';
 import { useEffect, useState } from 'react';
 import './styles.less';
@@ -17,18 +16,15 @@ export default function ReaderWindow() {
 
   useEffect(() => {
     const win = getCurrentWindow();
-    const webview = getCurrentWebview();
 
     const focusListener = win.listen('tauri://focus', () => {
       setIsFocus(true);
       win.setDecorations(true);
-      win.setShadow(true);
     });
 
     const blurListener = win.listen('tauri://blur', () => {
       setIsFocus(false);
       win.setDecorations(false);
-      win.setShadow(false);
     });
 
     return () => {

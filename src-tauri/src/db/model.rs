@@ -7,4 +7,5 @@ pub struct Novel {
     pub title: String,
     pub path: String,
     pub last_read_position: u64,
+    pub total_characters: u64,
 }
