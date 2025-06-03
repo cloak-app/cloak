@@ -4,6 +4,10 @@
   "description": "Capability for the reader window",
   "windows": ["reader"],
   "permissions": [
+    "core:default",
+    "opener:default",
+    "dialog:default",
+    "store:default",
     "core:window:allow-set-decorations",
     "core:window:allow-set-background-color",
     "core:event:allow-listen",

@@ -1,6 +1,6 @@
-use crate::commands::utils::NovelReader;
 use crate::db::model::Novel;
 use crate::db::Db;
+use crate::reader::NovelReader;
 use crate::state::AppState;
 use std::sync::Mutex;
 
@@ -36,22 +36,32 @@ pub async fn get_novel_list(db: tauri::State<'_, Db>) -> Result<Vec<Novel>, Stri
     Ok(novels)
 }
 
+pub async fn get_novel_by_id(db: &Db, id: i64) -> Result<Novel, String> {
+    let novel = sqlx::query_as::<_, Novel>("SELECT * FROM novel WHERE id = ?")
+        .bind(id)
+        .fetch_one(db)
+        .await
+        .map_err(|e| format!("Error fetching novel: {}", e))?;
+
+    Ok(novel)
+}
+
 #[tauri::command]
 pub async fn open_novel(
     db: tauri::State<'_, Db>,
     state: tauri::State<'_, Mutex<AppState>>,
-    id: i32,
+    id: i64,
 ) -> Result<(), String> {
-    let novel = sqlx::query_as::<_, Novel>("SELECT * FROM novel WHERE id = ?")
-        .bind(id)
-        .fetch_one(&*db)
-        .await
-        .map_err(|e| format!("Error fetching novel: {}", e))?;
+    let novel = get_novel_by_id(&*db, id).await?;
 
     // 创建 reader 并更新状态
-    let reader = NovelReader::new(&novel.path, novel.last_read_position);
-    let mut state = state.lock().unwrap();
-    state.novel_reader = Some(reader);
+    let reader = NovelReader::new(novel);
 
-    Ok(())
+    if let Ok(reader) = reader {
+        let mut state = state.lock().unwrap();
+        state.novel_reader = Some(reader);
+        Ok(())
+    } else {
+        Err(format!("Failed to open novel!"))
+    }
 }

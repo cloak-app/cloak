@@ -26,3 +26,5 @@ sqlx = { version = "0.8.6", features = ["sqlite", "runtime-tokio"] }
 tauri-plugin-dialog = "2"
 tauri-plugin-store = "2"
 tauri-plugin-process = "2"
+regex = "1.11.1"
+memmap2 = "0.9.5"

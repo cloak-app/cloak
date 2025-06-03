@@ -10,23 +10,39 @@
     "tauri": "tauri"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.0.1",
+    "@radix-ui/react-dialog": "^1.1.14",
+    "@radix-ui/react-label": "^2.1.7",
+    "@radix-ui/react-progress": "^1.1.7",
+    "@radix-ui/react-separator": "^1.1.7",
+    "@radix-ui/react-slot": "^1.2.3",
+    "@radix-ui/react-switch": "^1.2.5",
+    "@radix-ui/react-tooltip": "^1.2.7",
+    "@tailwindcss/vite": "^4.1.8",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-dialog": "~2",
     "@tauri-apps/plugin-opener": "^2",
     "@tauri-apps/plugin-process": "~2",
-    "@tauri-apps/plugin-store": "~2",
+    "@tauri-apps/plugin-store": "~2.2.0",
     "ahooks": "^3.8.5",
+    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "lessline": "^0.0.1",
+    "lucide-react": "^0.511.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-hook-form": "^7.57.0",
+    "react-router": "^7.6.1",
+    "tailwind-merge": "^3.3.0",
+    "tailwindcss": "^4.1.8",
+    "zod": "^3.25.49"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",
+    "@types/node": "^22.15.27",
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
-    "less": "^4.3.0",
+    "tw-animate-css": "^1.3.2",
     "typescript": "~5.6.2",
     "vite": "^6.0.3"
   }

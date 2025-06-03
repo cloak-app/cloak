@@ -1,33 +1,69 @@
 mod commands;
 mod db;
+mod reader;
 mod state;
 
-use crate::commands::novel;
+use crate::commands::{config, novel};
 use crate::db::setup_db;
+use crate::reader::NovelReader;
 use crate::state::AppState;
 use std::sync::Mutex;
 use tauri::{menu::*, tray::TrayIconBuilder, Manager, RunEvent, WebviewUrl, WebviewWindowBuilder};
+use tauri_plugin_store::StoreExt;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             novel::add_novel,
             novel::get_novel_list,
             novel::open_novel,
+            config::set_dock_visibility,
+            config::set_always_on_top
         ])
         .setup(|app| {
-            #[cfg(target_os = "macos")]
-            app.set_dock_visibility(false);
-
-            /* --------------------------------- 新建数据库连接 -------------------------------- */
+            /* -------------------------------- 初始化全局上下文 -------------------------------- */
             tauri::async_runtime::block_on(async {
                 let db = setup_db(app).await;
+
+                let store = app.store("app_data.json").unwrap();
+
+                let last_read_novel_id = store.get("last_read_novel_id").and_then(|v| v.as_i64());
+
+                let mut novel_reader: Option<NovelReader> = None;
+
+                // 上次阅读的小说，如果存在，则打开它
+                if let Some(last_read_novel_id) = last_read_novel_id {
+                    if let Ok(novel) = novel::get_novel_by_id(&db, last_read_novel_id).await {
+                        let reader = NovelReader::new(novel);
+
+                        if let Ok(reader) = reader {
+                            novel_reader = Some(reader);
+                        } else {
+                            store.set("last_read_novel_id", None::<i64>);
+                        }
+                    }
+                }
+
                 app.manage(db);
-                app.manage(Mutex::new(AppState { novel_reader: None }));
+                app.manage(store);
+                app.manage(Mutex::new(AppState { novel_reader }));
             });
+
+            /* ---------------------------------- 系统设置 ---------------------------------- */
+            #[cfg(target_os = "macos")]
+            {
+                let store = app.get_store("app_data.json").unwrap();
+                let dock_visibility = store
+                    .get("dock_visibility")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false);
+
+                app.set_dock_visibility(dock_visibility);
+            }
 
             /* --------------------------------- 注册托盘菜单 --------------------------------- */
 
@@ -52,28 +88,43 @@ pub fn run() {
                     }
                     "settings" => {
                         let window = app.get_webview_window("settings");
-                        if let None = window {
+
+                        if let Some(window) = window {
+                            window.set_focus().unwrap();
+                        } else {
                             WebviewWindowBuilder::new(app, "settings", WebviewUrl::default())
-                                .inner_size(400.0, 200.0)
+                                .inner_size(800.0, 600.0)
                                 .build()
                                 .unwrap();
-                        } else {
-                            window.unwrap().set_focus().unwrap();
                         }
                     }
                     "open_reader" => {
                         let window = app.get_webview_window("reader");
-                        if let None = window {
+
+                        if let Some(window) = window {
+                            window.set_focus().unwrap();
+                        } else {
+                            let store = app.get_store("app_data.json").unwrap();
+                            let always_on_top = store
+                                .get("always_on_top")
+                                .and_then(|v| v.as_bool())
+                                .unwrap_or(false);
+
+                            let transparent = store
+                                .get("transparent")
+                                .and_then(|v| v.as_bool())
+                                .unwrap_or(true);
+
                             WebviewWindowBuilder::new(app, "reader", WebviewUrl::default())
                                 .shadow(false)
-                                .transparent(true)
+                                .transparent(transparent)
+                                .always_on_top(always_on_top)
                                 .inner_size(200.0, 100.0)
                                 .build()
                                 .unwrap();
-                        } else {
-                            window.unwrap().set_focus().unwrap();
                         }
                     }
+
                     _ => {
                         panic!("menu item {:?} not handled", event.id);
                     }

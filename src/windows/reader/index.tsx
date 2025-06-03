@@ -1,8 +1,6 @@
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import clsx from 'clsx';
 import { useEffect, useState } from 'react';
-import './styles.less';
-import { Typography } from 'lessline';
 
 interface Novel {
   id: number;
@@ -35,7 +33,7 @@ export default function ReaderWindow() {
 
   return (
     <div className={clsx('reader-window')}>
-      <Typography.Paragraph>请从托盘菜单打开一本小说</Typography.Paragraph>
+      <p>请从托盘菜单打开一本小说</p>
     </div>
   );
 }

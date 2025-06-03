@@ -1,4 +1,4 @@
-use crate::commands::utils::NovelReader;
+use crate::reader::NovelReader;
 
 pub struct AppState {
     pub novel_reader: Option<NovelReader>,

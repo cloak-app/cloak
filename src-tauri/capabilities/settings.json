@@ -3,5 +3,10 @@
   "identifier": "settings",
   "description": "Capability for the settings window",
   "windows": ["settings"],
-  "permissions": ["core:default", "opener:default", "dialog:default"]
+  "permissions": [
+    "core:default",
+    "opener:default",
+    "dialog:default",
+    "store:default"
+  ]
 }
