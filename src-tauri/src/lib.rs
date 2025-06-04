@@ -21,8 +21,13 @@ pub fn run() {
             novel::add_novel,
             novel::get_novel_list,
             novel::open_novel,
+            novel::get_current_novel,
+            novel::get_chapter_list,
+            novel::get_line,
+            novel::next_line,
+            novel::prev_line,
             config::set_dock_visibility,
-            config::set_always_on_top
+            config::set_always_on_top,
         ])
         .setup(|app| {
             /* -------------------------------- 初始化全局上下文 -------------------------------- */
@@ -42,8 +47,6 @@ pub fn run() {
 
                         if let Ok(reader) = reader {
                             novel_reader = Some(reader);
-                        } else {
-                            store.set("last_read_novel_id", None::<i64>);
                         }
                     }
                 }

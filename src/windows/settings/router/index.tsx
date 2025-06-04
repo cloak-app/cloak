@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router';
-import NovelList from '../pages/novel-list';
 import Layout from '../pages/layout';
+import NovelDetail from '../pages/novel-detail';
+import NovelList from '../pages/novel-list';
 import Config from '../pages/system-setting';
 
 export const router = createBrowserRouter([
@@ -11,6 +12,11 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
+        element: <NovelDetail />,
+        handle: { crumb: () => '当前小说' },
+      },
+      {
+        path: '/novel-list',
         element: <NovelList />,
         handle: { crumb: () => '小说列表' },
       },

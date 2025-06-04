@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useLocation } from 'react-router';
 import { SearchForm } from './search-form';
 import {
   Sidebar,
@@ -12,7 +13,6 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from '@/components/ui/sidebar';
-import { useLocation } from 'react-router';
 
 // This is sample data.
 const data = {
@@ -22,8 +22,12 @@ const data = {
       title: '小说管理',
       items: [
         {
-          title: '小说列表',
+          title: '当前小说',
           url: '/',
+        },
+        {
+          title: '小说列表',
+          url: '/novel-list',
         },
       ],
     },

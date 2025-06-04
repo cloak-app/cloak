@@ -1,6 +1,8 @@
-import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { invoke } from '@tauri-apps/api/core';
+import { HelpCircle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 import {
   Form,
   FormControl,
@@ -11,14 +13,12 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
-import { useFormWatch } from '@/hooks/use-form-watch';
-import { invoke } from '@tauri-apps/api/core';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { HelpCircle } from 'lucide-react';
+import { useFormWatch } from '@/hooks/use-form-watch';
 
 const formSchema = z.object({
   dockVisibility: z.boolean(),

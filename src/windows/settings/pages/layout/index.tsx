@@ -1,3 +1,4 @@
+import { Outlet, useMatches } from 'react-router';
 import { AppSidebar } from './components/app-sidebar';
 import {
   Breadcrumb,
@@ -13,7 +14,6 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
-import { Outlet, useMatches } from 'react-router';
 
 export default function Layout() {
   const matches = useMatches().filter(
