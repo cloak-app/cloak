@@ -43,23 +43,25 @@ export default function Layout() {
   });
 
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset className="w-0">
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator
-            orientation="vertical"
-            className="mr-2 data-[orientation=vertical]:h-4"
-          />
-          <Breadcrumb>
-            <BreadcrumbList>{breadcrumbs}</BreadcrumbList>
-          </Breadcrumb>
-        </header>
-        <div className="flex flex-1 flex-col gap-4 p-4">
-          <Outlet />
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+    <div className="w-screen h-screen">
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset>
+          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator
+              orientation="vertical"
+              className="mr-2 data-[orientation=vertical]:h-4"
+            />
+            <Breadcrumb>
+              <BreadcrumbList>{breadcrumbs}</BreadcrumbList>
+            </Breadcrumb>
+          </header>
+          <div className="flex-1 h-0 overflow-y-auto">
+            <Outlet />
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
+    </div>
   );
 }

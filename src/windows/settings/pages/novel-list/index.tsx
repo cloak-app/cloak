@@ -111,7 +111,7 @@ const NovelList: React.FC = () => {
   });
 
   return (
-    <div>
+    <div className="p-4">
       <div className="flex items-center justify-between py-4">
         <Input
           placeholder="输入小说名称搜索..."

@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { invoke } from '@tauri-apps/api/core';
 import { confirm } from '@tauri-apps/plugin-dialog';
+import { useRequest } from 'ahooks';
 import { HelpCircle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -13,6 +14,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import {
   Tooltip,
@@ -20,34 +22,42 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useFormWatch } from '@/hooks/use-form-watch';
+import { Config } from '@/types';
 
 const formSchema = z.object({
-  dockVisibility: z.boolean(),
-  alwaysOnTop: z.boolean(),
+  dock_visibility: z.boolean(),
+  always_on_top: z.boolean(),
   transparent: z.boolean(),
 });
 
-const Config: React.FC = () => {
+const SystemSetting: React.FC = () => {
+  const { loading } = useRequest(() => invoke<Config>('get_config'), {
+    onSuccess: (data) => form.reset(data),
+  });
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      dockVisibility: false,
-      alwaysOnTop: false,
-      transparent: false,
+      dock_visibility: false,
+      always_on_top: false,
+      transparent: true,
     },
   });
 
-  useFormWatch(form, 'dockVisibility', (visible) => {
-    invoke('set_dock_visibility', { visible });
+  useFormWatch(form, 'dock_visibility', (dockVisibility) => {
+    if (loading) return;
+    invoke('set_dock_visibility', { dockVisibility });
   });
 
-  useFormWatch(form, 'alwaysOnTop', (alwaysOnTop) => {
+  useFormWatch(form, 'always_on_top', (alwaysOnTop) => {
+    if (loading) return;
     invoke('set_always_on_top', { alwaysOnTop });
   });
 
   useFormWatch(form, 'transparent', async (transparent) => {
+    if (loading) return;
     const forceReopen = await confirm('重新打开阅读器窗口后生效，是否继续？', {
-      title: 'Tauri',
+      title: 'Cloak',
       kind: 'warning',
       okLabel: '立即重启',
       cancelLabel: '下次再说',
@@ -56,12 +66,28 @@ const Config: React.FC = () => {
     invoke('set_transparent', { transparent, forceReopen });
   });
 
+  if (loading)
+    return (
+      <div className="space-y-8">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <div key={index} className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-4 w-4" />
+            </div>
+            <Skeleton className="h-6 w-12" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+        ))}
+      </div>
+    );
+
   return (
     <Form {...form}>
-      <form className="space-y-8">
+      <form className="space-y-8 p-4">
         <FormField
           control={form.control}
-          name="dockVisibility"
+          name="dock_visibility"
           render={({ field: { value, onChange, ...rest } }) => (
             <FormItem>
               <FormLabel>
@@ -87,7 +113,7 @@ const Config: React.FC = () => {
         />
         <FormField
           control={form.control}
-          name="alwaysOnTop"
+          name="always_on_top"
           render={({ field: { value, onChange, ...rest } }) => (
             <FormItem>
               <FormLabel>总在最前</FormLabel>
@@ -130,4 +156,4 @@ const Config: React.FC = () => {
   );
 };
 
-export default Config;
+export default SystemSetting;

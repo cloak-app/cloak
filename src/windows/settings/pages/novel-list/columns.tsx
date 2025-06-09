@@ -1,7 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-
 import {
   Tooltip,
   TooltipContent,
@@ -32,12 +31,14 @@ export const defaultColumns: ColumnDef<Novel>[] = [
     cell: ({ row }) => {
       const novel = row.original;
       const lastReadPosition = novel.last_read_position;
-      const totalCharacters = novel.total_characters;
+      const totalCharacters = novel.total_lines;
       const progress = safeDivide(lastReadPosition, totalCharacters) * 100;
       return (
         <div className="flex items-center gap-2">
           <Progress className="w-30" value={progress} />
-          <span>{progress.toFixed(2)}%</span>
+          <span className="text-sm text-muted-foreground">
+            {progress.toFixed(2)}%
+          </span>
         </div>
       );
     },
@@ -48,7 +49,7 @@ export const defaultColumns: ColumnDef<Novel>[] = [
     cell: ({ row }) => {
       const novel = row.original;
       const lastReadPosition = novel.last_read_position;
-      const totalCharacters = novel.total_characters;
+      const totalCharacters = novel.total_lines;
       const isFinished = lastReadPosition >= totalCharacters;
 
       return (

@@ -2,7 +2,8 @@ import { createBrowserRouter } from 'react-router';
 import Layout from '../pages/layout';
 import NovelDetail from '../pages/novel-detail';
 import NovelList from '../pages/novel-list';
-import Config from '../pages/system-setting';
+import ReadingSetting from '../pages/reading-setting';
+import SystemSetting from '../pages/system-setting';
 
 export const router = createBrowserRouter([
   {
@@ -22,12 +23,12 @@ export const router = createBrowserRouter([
       },
       {
         path: '/system-setting',
-        element: <Config />,
+        element: <SystemSetting />,
         handle: { crumb: () => '系统设置' },
       },
       {
         path: '/reading-setting',
-        element: <Config />,
+        element: <ReadingSetting />,
         handle: { crumb: () => '阅读设置' },
       },
     ],

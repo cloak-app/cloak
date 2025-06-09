@@ -16,6 +16,7 @@ use tauri_plugin_store::StoreExt;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
@@ -24,11 +25,12 @@ pub fn run() {
             novel::add_novel,
             novel::get_novel_list,
             novel::open_novel,
-            novel::get_current_novel,
-            novel::get_chapter_list,
+            novel::get_novel_reader,
             novel::get_line,
+            novel::set_line_num,
             novel::next_line,
             novel::prev_line,
+            config::get_config,
             config::set_dock_visibility,
             config::set_always_on_top,
             config::set_transparent,

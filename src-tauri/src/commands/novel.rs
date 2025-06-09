@@ -1,6 +1,5 @@
 use crate::db::model::Novel;
 use crate::db::Db;
-use crate::reader::Chapter;
 use crate::reader::NovelReader;
 use crate::state::AppState;
 use std::fs::{copy, File};
@@ -108,26 +107,16 @@ pub async fn open_novel(
 }
 
 #[tauri::command]
-pub async fn get_current_novel(state: tauri::State<'_, Mutex<AppState>>) -> Result<Novel, String> {
-    let state = state.lock().map_err(|e| e.to_string())?;
-    let reader = state
-        .novel_reader
-        .as_ref()
-        .ok_or("No novel is currently open")?;
-
-    Ok(reader.novel.clone())
-}
-
-#[tauri::command]
-pub async fn get_chapter_list(
+pub async fn get_novel_reader(
     state: tauri::State<'_, Mutex<AppState>>,
-) -> Result<Vec<Chapter>, String> {
+) -> Result<NovelReader, String> {
     let state = state.lock().map_err(|e| e.to_string())?;
     let reader = state
         .novel_reader
         .as_ref()
         .ok_or("No novel is currently open")?;
-    Ok(reader.chapters.clone())
+
+    Ok(reader.clone())
 }
 
 #[tauri::command]
@@ -141,6 +130,22 @@ pub async fn get_line(state: tauri::State<'_, Mutex<AppState>>) -> Result<String
     let line = reader.get_line();
 
     Ok(line.unwrap_or("").to_string())
+}
+
+#[tauri::command]
+pub async fn set_line_num(
+    state: tauri::State<'_, Mutex<AppState>>,
+    line_num: usize,
+) -> Result<(), String> {
+    let mut state = state.lock().map_err(|e| e.to_string())?;
+    let reader = state
+        .novel_reader
+        .as_mut()
+        .ok_or("No novel is currently open")?;
+
+    reader.set_line_num(line_num)?;
+
+    Ok(())
 }
 
 #[tauri::command]

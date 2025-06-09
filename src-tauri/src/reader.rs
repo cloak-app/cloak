@@ -10,6 +10,7 @@ pub struct Chapter {
     pub start_line: usize,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct NovelReader {
     pub novel: Novel,
     pub chapters: Vec<Chapter>,
@@ -24,7 +25,7 @@ impl NovelReader {
         let mut lines = Vec::new();
         let mut chapters = Vec::new();
 
-        let chapter_re = Regex::new(r"^(第[零一二三四五六七八九十百千万1-9]+章).*")
+        let chapter_re = Regex::new(r"^(第[零一二三四五六七八九十百千万1-9]+章.*)$")
             .map_err(|e| e.to_string())?;
 
         for (line_num, line) in reader.lines().enumerate() {
