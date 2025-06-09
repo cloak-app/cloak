@@ -2,18 +2,21 @@ mod commands;
 mod db;
 mod reader;
 mod state;
+mod window;
 
 use crate::commands::{config, novel};
 use crate::db::setup_db;
 use crate::reader::NovelReader;
 use crate::state::AppState;
+use crate::window::*;
 use std::sync::Mutex;
-use tauri::{menu::*, tray::TrayIconBuilder, Manager, RunEvent, WebviewUrl, WebviewWindowBuilder};
+use tauri::{menu::*, tray::TrayIconBuilder, Manager, RunEvent};
 use tauri_plugin_store::StoreExt;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
@@ -28,6 +31,7 @@ pub fn run() {
             novel::prev_line,
             config::set_dock_visibility,
             config::set_always_on_top,
+            config::set_transparent,
         ])
         .setup(|app| {
             /* -------------------------------- 初始化全局上下文 -------------------------------- */
@@ -90,44 +94,11 @@ pub fn run() {
                         app.exit(0);
                     }
                     "settings" => {
-                        let window = app.get_webview_window("settings");
-
-                        if let Some(window) = window {
-                            window.set_focus().unwrap();
-                        } else {
-                            WebviewWindowBuilder::new(app, "settings", WebviewUrl::default())
-                                .inner_size(800.0, 600.0)
-                                .build()
-                                .unwrap();
-                        }
+                        open_settings_window(app).unwrap();
                     }
                     "open_reader" => {
-                        let window = app.get_webview_window("reader");
-
-                        if let Some(window) = window {
-                            window.set_focus().unwrap();
-                        } else {
-                            let store = app.get_store("app_data.json").unwrap();
-                            let always_on_top = store
-                                .get("always_on_top")
-                                .and_then(|v| v.as_bool())
-                                .unwrap_or(false);
-
-                            let transparent = store
-                                .get("transparent")
-                                .and_then(|v| v.as_bool())
-                                .unwrap_or(true);
-
-                            WebviewWindowBuilder::new(app, "reader", WebviewUrl::default())
-                                .shadow(false)
-                                .transparent(transparent)
-                                .always_on_top(always_on_top)
-                                .inner_size(200.0, 100.0)
-                                .build()
-                                .unwrap();
-                        }
+                        open_reader_window(app).unwrap();
                     }
-
                     _ => {
                         panic!("menu item {:?} not handled", event.id);
                     }

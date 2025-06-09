@@ -24,10 +24,11 @@ impl NovelReader {
         let mut lines = Vec::new();
         let mut chapters = Vec::new();
 
-        let chapter_re = Regex::new(r"^(第[零一二三四五六七八九十百千万1-9]+章).*").unwrap();
+        let chapter_re = Regex::new(r"^(第[零一二三四五六七八九十百千万1-9]+章).*")
+            .map_err(|e| e.to_string())?;
 
         for (line_num, line) in reader.lines().enumerate() {
-            let line_string = line.unwrap();
+            let line_string = line.map_err(|e| e.to_string())?;
 
             chapter_re.captures(&line_string).map(|caps| {
                 let chapter = Chapter {
@@ -41,14 +42,11 @@ impl NovelReader {
             lines.push(line_string);
         }
 
-        // 添加安全检查
-        if novel.last_read_position > usize::MAX as u64 {
-            return Err("Position value too large for this platform".to_string());
-        }
+        let line_num = novel.last_read_position as usize;
 
         Ok(Self {
             chapters,
-            line_num: novel.last_read_position as usize,
+            line_num,
             novel,
             lines,
         })

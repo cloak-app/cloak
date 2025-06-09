@@ -1,3 +1,4 @@
+import React from 'react';
 import { Outlet, useMatches } from 'react-router';
 import { AppSidebar } from './components/app-sidebar';
 import {
@@ -17,30 +18,34 @@ import {
 
 export default function Layout() {
   const matches = useMatches().filter(
-    (match) => (match?.handle as { crumb: () => React.ReactNode })?.crumb,
+    (match) => (match?.handle as { crumb: () => string })?.crumb,
   );
 
   const breadcrumbs = matches.map((match, index) => {
-    const crumb = (match.handle as { crumb: () => React.ReactNode }).crumb();
+    const crumb = (match.handle as { crumb: () => string }).crumb();
 
-    return index === matches.length - 1 ? (
-      <BreadcrumbItem key={match.pathname}>
-        <BreadcrumbPage>{crumb}</BreadcrumbPage>
-      </BreadcrumbItem>
-    ) : (
-      <>
-        <BreadcrumbItem key={match.pathname}>
-          <BreadcrumbLink href={match.pathname}>{crumb}</BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator />
-      </>
+    return (
+      <React.Fragment key={crumb}>
+        {index === matches.length - 1 ? (
+          <BreadcrumbItem>
+            <BreadcrumbPage>{crumb}</BreadcrumbPage>
+          </BreadcrumbItem>
+        ) : (
+          <>
+            <BreadcrumbItem>
+              <BreadcrumbLink href={match.pathname}>{crumb}</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+          </>
+        )}
+      </React.Fragment>
     );
   });
 
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset>
+      <SidebarInset className="w-0">
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator

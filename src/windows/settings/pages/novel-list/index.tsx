@@ -1,39 +1,47 @@
+import {
+  ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
 import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
+import { openPath } from '@tauri-apps/plugin-opener';
 import { useRequest } from 'ahooks';
-import { useNavigate } from 'react-router';
+import { MoreHorizontal, Plus, Trash2 } from 'lucide-react';
+import { defaultColumns } from './columns';
 import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
-import { safeDivide } from '@/lib/number';
-
-interface Novel {
-  id: string;
-  title: string;
-  path: string;
-  last_read_position: number;
-  total_characters: number;
-}
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Novel } from '@/types';
 
 const NovelList: React.FC = () => {
-  const navigate = useNavigate();
+  const { data, refresh } = useRequest(() => invoke<Novel[]>('get_novel_list'));
 
-  const { data: novelList, refresh } = useRequest(() =>
-    invoke<Novel[]>('get_novel_list'),
-  );
-  const { data: currentNovel } = useRequest(() =>
-    invoke<Novel>('get_current_novel'),
-  );
-
-  const handleDelete = (id: string) => {
+  const handleDelete = (id: number) => {
     invoke('delete_novel', { id });
+    refresh();
+  };
+
+  const handleOpen = (id: number) => {
+    invoke('open_novel', { id });
+    refresh();
   };
 
   const handleAdd = async () => {
@@ -46,60 +54,129 @@ const NovelList: React.FC = () => {
     refresh();
   };
 
-  const handleOpen = (id: string) => {
-    invoke('open_novel', { id });
-    refresh();
+  const handleOpenFileDirectory = (path: string) => {
+    const directoryPath = path.split('/').slice(0, -1).join('/');
+
+    openPath(directoryPath);
   };
 
+  const columns: ColumnDef<Novel>[] = [
+    ...defaultColumns,
+    {
+      id: 'actions',
+      header: '操作',
+      cell: ({ row }) => {
+        const novel = row.original;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="data-[state=open]:bg-muted size-8"
+              >
+                <MoreHorizontal />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-[160px]">
+              <DropdownMenuLabel>操作</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => handleOpen(novel.id)}>
+                阅读
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleOpenFileDirectory(novel.path)}
+              >
+                打开小说目录
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => handleDelete(novel.id)}
+              >
+                <Trash2 />
+                删除
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
+
+  const table = useReactTable({
+    data: data ?? [],
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+  });
+
   return (
-    <section>
-      <div className="flex justify-end">
-        <Button onClick={handleAdd}>添加小说</Button>
+    <div>
+      <div className="flex items-center justify-between py-4">
+        <Input
+          placeholder="输入小说名称搜索..."
+          value={(table.getColumn('title')?.getFilterValue() as string) ?? ''}
+          onChange={(event) =>
+            table.getColumn('title')?.setFilterValue(event.target.value)
+          }
+          className="w-50"
+        />
+        <Button onClick={handleAdd}>
+          <Plus />
+          添加小说
+        </Button>
       </div>
-      <Separator className="my-4" />
-      <div className="grid grid-cols-2 gap-4">
-        {novelList?.map((novel) => {
-          const progress =
-            safeDivide(novel.last_read_position, novel.total_characters) * 100;
-          return (
-            <Card key={novel.id}>
-              <CardHeader>
-                <CardTitle>{novel.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-2">
-                  <div className="text-sm shrink-0">阅读进度：</div>
-                  <Progress value={progress} />
-                  <small>{progress.toFixed(2)}%</small>
-                </div>
-              </CardContent>
-              <CardFooter className="flex gap-2">
-                {currentNovel?.id === novel.id ? (
-                  <Button variant="secondary" onClick={() => navigate(`/`)}>
-                    查看详情
-                  </Button>
-                ) : (
-                  <>
-                    <Button
-                      variant="secondary"
-                      onClick={() => handleOpen(novel.id)}
-                    >
-                      打开小说
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      onClick={() => handleDelete(novel.id)}
-                    >
-                      删除
-                    </Button>
-                  </>
-                )}
-              </CardFooter>
-            </Card>
-          );
-        })}
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => {
+                  return (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                    </TableHead>
+                  );
+                })}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && 'selected'}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  暂无小说，请点击右上角按钮导入小说
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
       </div>
-    </section>
+    </div>
   );
 };
 

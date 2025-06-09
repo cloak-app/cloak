@@ -1,10 +1,12 @@
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { useRequest } from 'ahooks';
+import { useEventListener, useRequest } from 'ahooks';
 import clsx from 'clsx';
 import { useEffect, useState } from 'react';
+import { Novel } from '@/types';
 
 export default function ReaderWindow() {
+  const { data: novel } = useRequest(() => invoke<Novel>('get_current_novel'));
   const { data: line, refresh } = useRequest(() => invoke<string>('get_line'));
 
   const [isFocus, setIsFocus] = useState(false);
@@ -14,8 +16,8 @@ export default function ReaderWindow() {
 
     const focusListener = win.listen('tauri://focus', () => {
       setIsFocus(true);
-      refresh();
       win.setDecorations(true);
+      refresh();
     });
 
     const blurListener = win.listen('tauri://blur', () => {
@@ -29,9 +31,21 @@ export default function ReaderWindow() {
     };
   }, [refresh]);
 
+  useEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') {
+      invoke('next_line');
+      refresh();
+    }
+
+    if (e.key === 'ArrowLeft') {
+      invoke('prev_line');
+      refresh();
+    }
+  });
+
   return (
     <div className={clsx('reader-window', { 'is-focus': isFocus })}>
-      {line ? line : <p>请从托盘菜单打开一本小说</p>}
+      {novel ? line : <p>请从托盘菜单打开一本小说</p>}
     </div>
   );
 }

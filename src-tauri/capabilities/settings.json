@@ -6,7 +6,10 @@
   "permissions": [
     "core:default",
     "opener:default",
+    "opener:allow-open-path",
     "dialog:default",
-    "store:default"
+    "store:default",
+    "process:default",
+    "process:allow-restart"
   ]
 }

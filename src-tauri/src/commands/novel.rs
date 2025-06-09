@@ -3,28 +3,61 @@ use crate::db::Db;
 use crate::reader::Chapter;
 use crate::reader::NovelReader;
 use crate::state::AppState;
+use std::fs::{copy, File};
+use std::io::{BufRead, BufReader};
 use std::sync::Mutex;
-use tauri::Runtime;
+use tauri::Manager;
 use tauri_plugin_store::StoreExt;
 
 #[tauri::command]
-pub async fn add_novel(db: tauri::State<'_, Db>, path: &str) -> Result<(), String> {
-    let filename = path.split("/").last().unwrap();
+pub async fn add_novel(
+    app_handle: tauri::AppHandle,
+    db: tauri::State<'_, Db>,
+    path: &str,
+) -> Result<(), String> {
+    let filename = path.split("/").last().ok_or("Invalid file path")?;
 
     // 校验文件后缀名为 .txt
     if !filename.ends_with(".txt") {
         return Err("File must have a `.txt` extension".to_string());
     }
 
-    let title = filename.split(".").next().unwrap();
+    // 校验文件是否存在
+    if !std::path::Path::new(path).exists() {
+        return Err("File does not exist".to_string());
+    }
 
-    sqlx::query("INSERT INTO novel (title, path, last_read_position) VALUES (?1, ?2, ?3)")
-        .bind(title)
-        .bind(path)
-        .bind(0)
-        .execute(&*db)
-        .await
-        .map_err(|e| format!("Error executing query: {}", e))?;
+    // 获取文件行数
+    let file = File::open(path).map_err(|e| e.to_string())?;
+    let reader = BufReader::new(file);
+
+    let total_lines = reader.lines().count() as i64;
+
+    // 将文件复制到应用程序目录
+    let app_data_dir = app_handle
+        .path()
+        .app_data_dir()
+        .expect("failed to get data_dir");
+
+    let mut new_path = app_data_dir.clone();
+    new_path.push(filename);
+
+    copy(path, &new_path).map_err(|e| format!("Error copying file: {}", e))?;
+
+    let title = filename.split(".").next().ok_or("Invalid filename")?;
+
+    let new_path_str = new_path.to_str().ok_or("Invalid file path")?;
+
+    sqlx::query(
+        "INSERT INTO novel (title, path, last_read_position, total_lines) VALUES (?1, ?2, ?3, ?4)",
+    )
+    .bind(title)
+    .bind(new_path_str)
+    .bind(0)
+    .bind(total_lines)
+    .execute(&*db)
+    .await
+    .map_err(|e| format!("Error executing query: {}", e))?;
 
     Ok(())
 }
@@ -50,15 +83,15 @@ pub async fn get_novel_by_id(db: &Db, id: i64) -> Result<Novel, String> {
 }
 
 #[tauri::command]
-pub async fn open_novel<R: Runtime>(
-    app: tauri::AppHandle<R>,
+pub async fn open_novel(
+    app: tauri::AppHandle,
     db: tauri::State<'_, Db>,
     state: tauri::State<'_, Mutex<AppState>>,
     id: i64,
 ) -> Result<(), String> {
     let novel = get_novel_by_id(&*db, id).await?;
 
-    let store = app.store("app_data.json").unwrap();
+    let store = app.store("app_data.json").map_err(|e| e.to_string())?;
 
     store.set("last_read_novel_id", novel.id);
 
@@ -66,7 +99,7 @@ pub async fn open_novel<R: Runtime>(
     let reader = NovelReader::new(novel);
 
     if let Ok(reader) = reader {
-        let mut state = state.lock().unwrap();
+        let mut state = state.lock().map_err(|e| e.to_string())?;
         state.novel_reader = Some(reader);
         Ok(())
     } else {
@@ -76,7 +109,7 @@ pub async fn open_novel<R: Runtime>(
 
 #[tauri::command]
 pub async fn get_current_novel(state: tauri::State<'_, Mutex<AppState>>) -> Result<Novel, String> {
-    let state = state.lock().unwrap();
+    let state = state.lock().map_err(|e| e.to_string())?;
     let reader = state
         .novel_reader
         .as_ref()
@@ -89,7 +122,7 @@ pub async fn get_current_novel(state: tauri::State<'_, Mutex<AppState>>) -> Resu
 pub async fn get_chapter_list(
     state: tauri::State<'_, Mutex<AppState>>,
 ) -> Result<Vec<Chapter>, String> {
-    let state = state.lock().unwrap();
+    let state = state.lock().map_err(|e| e.to_string())?;
     let reader = state
         .novel_reader
         .as_ref()
@@ -99,7 +132,7 @@ pub async fn get_chapter_list(
 
 #[tauri::command]
 pub async fn get_line(state: tauri::State<'_, Mutex<AppState>>) -> Result<String, String> {
-    let mut state = state.lock().unwrap();
+    let mut state = state.lock().map_err(|e| e.to_string())?;
     let reader = state
         .novel_reader
         .as_mut()
@@ -112,7 +145,7 @@ pub async fn get_line(state: tauri::State<'_, Mutex<AppState>>) -> Result<String
 
 #[tauri::command]
 pub async fn next_line(state: tauri::State<'_, Mutex<AppState>>) -> Result<String, String> {
-    let mut state = state.lock().unwrap();
+    let mut state = state.lock().map_err(|e| e.to_string())?;
     let reader = state
         .novel_reader
         .as_mut()
@@ -126,7 +159,7 @@ pub async fn next_line(state: tauri::State<'_, Mutex<AppState>>) -> Result<Strin
 
 #[tauri::command]
 pub async fn prev_line(state: tauri::State<'_, Mutex<AppState>>) -> Result<String, String> {
-    let mut state = state.lock().unwrap();
+    let mut state = state.lock().map_err(|e| e.to_string())?;
     let reader = state
         .novel_reader
         .as_mut()
