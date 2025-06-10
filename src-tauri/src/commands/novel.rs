@@ -1,12 +1,12 @@
 use crate::db::model::Novel;
 use crate::db::Db;
 use crate::reader::NovelReader;
-use crate::state::AppState;
+use crate::state::{AppState, AppStoreKey};
+use crate::utils::*;
 use std::fs::{copy, File};
 use std::io::{BufRead, BufReader};
 use std::sync::Mutex;
 use tauri::Manager;
-use tauri_plugin_store::StoreExt;
 
 #[tauri::command]
 pub async fn add_novel(
@@ -71,16 +71,6 @@ pub async fn get_novel_list(db: tauri::State<'_, Db>) -> Result<Vec<Novel>, Stri
     Ok(novels)
 }
 
-pub async fn get_novel_by_id(db: &Db, id: i64) -> Result<Novel, String> {
-    let novel = sqlx::query_as::<_, Novel>("SELECT * FROM novel WHERE id = ?")
-        .bind(id)
-        .fetch_one(db)
-        .await
-        .map_err(|e| format!("Error fetching novel: {}", e))?;
-
-    Ok(novel)
-}
-
 #[tauri::command]
 pub async fn open_novel(
     app: tauri::AppHandle,
@@ -90,9 +80,7 @@ pub async fn open_novel(
 ) -> Result<(), String> {
     let novel = get_novel_by_id(&*db, id).await?;
 
-    let store = app.store("app_data.json").map_err(|e| e.to_string())?;
-
-    store.set("last_read_novel_id", novel.id);
+    set_to_app_store(&app, AppStoreKey::LastReadNovelId, novel.id)?;
 
     // 创建 reader 并更新状态
     let reader = NovelReader::new(novel);
@@ -134,44 +122,71 @@ pub async fn get_line(state: tauri::State<'_, Mutex<AppState>>) -> Result<String
 
 #[tauri::command]
 pub async fn set_line_num(
+    db: tauri::State<'_, Db>,
     state: tauri::State<'_, Mutex<AppState>>,
     line_num: usize,
 ) -> Result<(), String> {
-    let mut state = state.lock().map_err(|e| e.to_string())?;
-    let reader = state
-        .novel_reader
-        .as_mut()
-        .ok_or("No novel is currently open")?;
+    let novel_id;
+    {
+        let mut state = state.lock().map_err(|e| e.to_string())?;
+        let reader = state
+            .novel_reader
+            .as_mut()
+            .ok_or("No novel is currently open")?;
 
-    reader.set_line_num(line_num)?;
+        reader.set_line_num(line_num)?;
+        novel_id = reader.novel.id;
+    }
+
+    save_novel(&*db, novel_id, line_num as i64).await?;
 
     Ok(())
 }
 
 #[tauri::command]
-pub async fn next_line(state: tauri::State<'_, Mutex<AppState>>) -> Result<String, String> {
-    let mut state = state.lock().map_err(|e| e.to_string())?;
-    let reader = state
-        .novel_reader
-        .as_mut()
-        .ok_or("No novel is currently open")?;
+pub async fn next_line(
+    db: tauri::State<'_, Db>,
+    state: tauri::State<'_, Mutex<AppState>>,
+) -> Result<String, String> {
+    let (novel_id, line_num, line);
+    {
+        let mut state = state.lock().map_err(|e| e.to_string())?;
+        let reader = state
+            .novel_reader
+            .as_mut()
+            .ok_or("No novel is currently open")?;
 
-    reader.set_line_num(reader.line_num + 1)?;
-    let line = reader.get_line();
+        reader.set_line_num(reader.line_num + 1)?;
+        line = reader.get_line().unwrap_or("").to_string();
+        novel_id = reader.novel.id;
+        line_num = reader.line_num;
+    }
 
-    Ok(line.unwrap_or("").to_string())
+    save_novel(&*db, novel_id, line_num as i64).await?;
+
+    Ok(line)
 }
 
 #[tauri::command]
-pub async fn prev_line(state: tauri::State<'_, Mutex<AppState>>) -> Result<String, String> {
-    let mut state = state.lock().map_err(|e| e.to_string())?;
-    let reader = state
-        .novel_reader
-        .as_mut()
-        .ok_or("No novel is currently open")?;
+pub async fn prev_line(
+    db: tauri::State<'_, Db>,
+    state: tauri::State<'_, Mutex<AppState>>,
+) -> Result<String, String> {
+    let (novel_id, line_num, line);
+    {
+        let mut state = state.lock().map_err(|e| e.to_string())?;
+        let reader = state
+            .novel_reader
+            .as_mut()
+            .ok_or("No novel is currently open")?;
 
-    reader.set_line_num(reader.line_num - 1)?;
-    let line = reader.get_line();
+        reader.set_line_num(reader.line_num - 1)?;
+        line = reader.get_line().unwrap_or("").to_string();
+        novel_id = reader.novel.id;
+        line_num = reader.line_num;
+    }
 
-    Ok(line.unwrap_or("").to_string())
+    save_novel(&*db, novel_id, line_num as i64).await?;
+
+    Ok(line)
 }

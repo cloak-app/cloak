@@ -20,24 +20,22 @@ export interface Chapter {
 export interface Config {
   /* ---------------------------------- 系统设置 ---------------------------------- */
   /** 是否显示 Dock 图标 */
-  dock_visibility: boolean;
+  dock_visibility?: boolean;
   /** 是否总在最前 */
-  always_on_top: boolean;
+  always_on_top?: boolean;
   /** 是否透明 */
-  transparent: boolean;
+  transparent?: boolean;
   /* ---------------------------------- 阅读设置 ---------------------------------- */
   /** 字体大小 */
-  font_size: number;
+  font_size?: number;
   /** 字体 */
-  font_family: string;
+  font_family?: string;
   /** 行高 */
-  line_height: number;
+  line_height?: number;
   /** 字体粗细 */
-  font_weight: number;
-  /** 字体样式 */
-  font_style: string;
+  font_weight?: number;
   /** 字体颜色 */
-  font_color: string;
+  font_color?: string;
   /** 背景颜色 */
-  background_color: string;
+  background_color?: string;
 }

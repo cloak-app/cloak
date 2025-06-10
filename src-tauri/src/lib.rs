@@ -2,16 +2,15 @@ mod commands;
 mod db;
 mod reader;
 mod state;
-mod window;
+mod utils;
 
 use crate::commands::{config, novel};
 use crate::db::setup_db;
 use crate::reader::NovelReader;
-use crate::state::AppState;
-use crate::window::*;
+use crate::state::{AppState, AppStoreKey};
+use crate::utils::*;
 use std::sync::Mutex;
 use tauri::{menu::*, tray::TrayIconBuilder, Manager, RunEvent};
-use tauri_plugin_store::StoreExt;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -34,42 +33,39 @@ pub fn run() {
             config::set_dock_visibility,
             config::set_always_on_top,
             config::set_transparent,
+            config::set_font_size,
+            config::set_font_family,
+            config::set_line_height,
+            config::set_font_weight,
+            config::set_font_color,
+            config::set_background_color,
         ])
         .setup(|app| {
             /* -------------------------------- 初始化全局上下文 -------------------------------- */
             tauri::async_runtime::block_on(async {
                 let db = setup_db(app).await;
 
-                let store = app.store("app_data.json").unwrap();
-
-                let last_read_novel_id = store.get("last_read_novel_id").and_then(|v| v.as_i64());
-
                 let mut novel_reader: Option<NovelReader> = None;
 
-                // 上次阅读的小说，如果存在，则打开它
-                if let Some(last_read_novel_id) = last_read_novel_id {
-                    if let Ok(novel) = novel::get_novel_by_id(&db, last_read_novel_id).await {
-                        let reader = NovelReader::new(novel);
-
-                        if let Ok(reader) = reader {
-                            novel_reader = Some(reader);
-                        }
+                let last_read_novel_id =
+                    get_from_app_store::<i64>(app.handle(), AppStoreKey::LastReadNovelId);
+                if let Ok(Some(id)) = last_read_novel_id {
+                    let novel = get_novel_by_id(&db, id).await.ok();
+                    if let Some(novel) = novel {
+                        novel_reader = NovelReader::new(novel).ok();
                     }
                 }
 
                 app.manage(db);
-                app.manage(store);
                 app.manage(Mutex::new(AppState { novel_reader }));
             });
 
             /* ---------------------------------- 系统设置 ---------------------------------- */
             #[cfg(target_os = "macos")]
             {
-                let store = app.get_store("app_data.json").unwrap();
-                let dock_visibility = store
-                    .get("dock_visibility")
-                    .and_then(|v| v.as_bool())
-                    .unwrap_or(false);
+                let dock_visibility =
+                    get_from_app_store::<bool>(app.handle(), AppStoreKey::DockVisibility)?
+                        .unwrap_or(false);
 
                 app.set_dock_visibility(dock_visibility);
             }
@@ -91,15 +87,15 @@ pub fn run() {
             TrayIconBuilder::new()
                 .icon(app.default_window_icon().unwrap().clone())
                 .menu(&menu)
-                .on_menu_event(|app, event| match event.id.as_ref() {
+                .on_menu_event(|app_handle, event| match event.id.as_ref() {
                     "quit" => {
-                        app.exit(0);
+                        app_handle.exit(0);
                     }
                     "settings" => {
-                        open_settings_window(app).unwrap();
+                        open_settings_window(app_handle).unwrap();
                     }
                     "open_reader" => {
-                        open_reader_window(app).unwrap();
+                        open_reader_window(app_handle).unwrap();
                     }
                     _ => {
                         panic!("menu item {:?} not handled", event.id);
