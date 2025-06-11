@@ -29,7 +29,9 @@ const formSchema = z.object({
   dock_visibility: z.boolean(),
   always_on_top: z.boolean(),
   transparent: z.boolean(),
-  shortcut: z.array(z.string()),
+  next_line_shortcut: z.string(),
+  prev_line_shortcut: z.string(),
+  boss_key_shortcut: z.string(),
 });
 
 const SystemSetting: React.FC = () => {
@@ -68,6 +70,33 @@ const SystemSetting: React.FC = () => {
     invoke('set_transparent', { transparent, forceReopen });
   });
 
+  useFormWatch(form, 'next_line_shortcut', (shortcut, previousShortcut) => {
+    if (loading) return;
+
+    console.log('next_line_shortcut', shortcut, previousShortcut);
+
+    if (previousShortcut) {
+      invoke('unset_shortcut', { shortcut: previousShortcut });
+    }
+    invoke('set_next_line_shortcut', { shortcut });
+  });
+
+  useFormWatch(form, 'prev_line_shortcut', (shortcut, previousShortcut) => {
+    if (loading) return;
+    if (previousShortcut) {
+      invoke('unset_shortcut', { shortcut: previousShortcut });
+    }
+    invoke('set_prev_line_shortcut', { shortcut });
+  });
+
+  useFormWatch(form, 'boss_key_shortcut', (shortcut, previousShortcut) => {
+    if (loading) return;
+    if (previousShortcut) {
+      invoke('unset_shortcut', { shortcut: previousShortcut });
+    }
+    invoke('set_boss_key_shortcut', { shortcut });
+  });
+
   if (loading)
     return (
       <div className="space-y-4">
@@ -86,7 +115,7 @@ const SystemSetting: React.FC = () => {
 
   return (
     <Form {...form}>
-      <form className="space-y-4 w-full flex flex-col gap-4 p-4 h-full">
+      <form className="space-y-4 w-full flex flex-col gap-4 p-4 h-full overflow-y-auto">
         <div className="border-b pb-2 text-lg font-semibold">基本设置</div>
         <FormField
           control={form.control}
@@ -157,13 +186,42 @@ const SystemSetting: React.FC = () => {
         <div className="border-b pb-2 text-lg font-semibold">快捷键设置</div>
         <FormField
           control={form.control}
-          name="shortcut"
+          name="next_line_shortcut"
           render={({ field: { value, onChange, ...rest } }) => (
             <FormItem>
-              <FormLabel>翻页下一页</FormLabel>
+              <FormLabel>下一页</FormLabel>
               <FormControl>
                 <ShortcutRecorder value={value} onChange={onChange} {...rest} />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="prev_line_shortcut"
+          render={({ field: { value, onChange, ...rest } }) => (
+            <FormItem>
+              <FormLabel>上一页</FormLabel>
+              <FormControl>
+                <ShortcutRecorder value={value} onChange={onChange} {...rest} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="boss_key_shortcut"
+          render={({ field: { value, onChange, ...rest } }) => (
+            <FormItem>
+              <FormLabel>老板键</FormLabel>
+              <FormControl>
+                <ShortcutRecorder value={value} onChange={onChange} {...rest} />
+              </FormControl>
+              <FormDescription>
+                按下快捷键后，将隐藏所有打开的窗口，重新按下快捷键后恢复
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

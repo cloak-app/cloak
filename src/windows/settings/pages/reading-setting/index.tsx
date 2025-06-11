@@ -53,7 +53,7 @@ const ReadingSetting: React.FC = () => {
 
   return (
     <Form {...form}>
-      <form className="space-y-4 w-full flex flex-col gap-4 p-4 h-full">
+      <form className="space-y-4 w-full flex flex-col gap-4 p-4 h-full overflow-y-aut">
         <FormField
           control={form.control}
           name="font_size"

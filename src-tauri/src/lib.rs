@@ -1,14 +1,15 @@
 mod commands;
 mod db;
-mod reader;
-mod state;
 mod utils;
 
-use crate::commands::{config, novel, shortcut};
+use crate::commands::{config, novel, reader};
 use crate::db::setup_db;
-use crate::reader::NovelReader;
-use crate::state::{AppState, AppStoreKey};
-use crate::utils::*;
+use crate::utils::novel::get_novel_by_id;
+use crate::utils::reader::NovelReader;
+use crate::utils::shortcut::AppShortcut;
+use crate::utils::state::{AppState, AppStoreKey};
+use crate::utils::store::get_from_app_store;
+use crate::utils::window::{open_reader_window, open_settings_window};
 use std::sync::Mutex;
 use tauri::{menu::*, tray::TrayIconBuilder, Manager, RunEvent};
 
@@ -25,11 +26,12 @@ pub fn run() {
             novel::add_novel,
             novel::get_novel_list,
             novel::open_novel,
-            novel::get_novel_reader,
-            novel::get_line,
-            novel::set_line_num,
-            novel::next_line,
-            novel::prev_line,
+            // 阅读相关
+            reader::get_novel_reader,
+            reader::get_line,
+            reader::set_line_num,
+            reader::next_line,
+            reader::prev_line,
             // 配置相关
             config::get_config,
             config::set_dock_visibility,
@@ -44,6 +46,7 @@ pub fn run() {
             config::set_next_line_shortcut,
             config::set_prev_line_shortcut,
             config::set_boss_key_shortcut,
+            config::unset_shortcut,
         ])
         .setup(|app| {
             /* -------------------------------- 初始化全局上下文 -------------------------------- */
@@ -66,7 +69,7 @@ pub fn run() {
             });
 
             /* --------------------------------- 注册全局快捷键 -------------------------------- */
-            shortcut::AppShortcut::init(app).unwrap_or_else(|e| {
+            AppShortcut::init(app).unwrap_or_else(|e| {
                 println!("Failed to register global shortcuts: {}", e);
             });
 

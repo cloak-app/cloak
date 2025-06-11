@@ -79,10 +79,6 @@ const NovelDetail: React.FC = () => {
     scrollIntoView();
   }, [scrollIntoView]);
 
-  console.log(line_num);
-
-  console.log(novel);
-
   const progress = safeDivide(line_num, novel?.total_lines) * 100;
 
   return (

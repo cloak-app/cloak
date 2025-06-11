@@ -38,4 +38,11 @@ export interface Config {
   font_color?: string;
   /** 背景颜色 */
   background_color?: string;
+  /* ---------------------------------- 快捷键设置 --------------------------------- */
+  /** 下一行快捷键 */
+  next_line_shortcut?: string;
+  /** 上一行快捷键 */
+  prev_line_shortcut?: string;
+  /** 老板键快捷键 */
+  boss_key_shortcut?: string;
 }

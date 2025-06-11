@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useRequest } from 'ahooks';
 import clsx from 'clsx';
@@ -12,12 +13,19 @@ export default function ReaderWindow() {
   const [isFocus, setIsFocus] = useState(false);
 
   useEffect(() => {
+    const listener = listen('reader-line-num-changed', () => refresh());
+
+    return () => {
+      listener.then((unListen) => unListen());
+    };
+  }, [refresh]);
+
+  useEffect(() => {
     const win = getCurrentWindow();
 
     const focusListener = win.listen('tauri://focus', () => {
       setIsFocus(true);
       win.setDecorations(true);
-      refresh();
     });
 
     const blurListener = win.listen('tauri://blur', () => {
@@ -29,7 +37,7 @@ export default function ReaderWindow() {
       focusListener.then((unListen) => unListen());
       blurListener.then((unListen) => unListen());
     };
-  }, [refresh]);
+  }, []);
 
   return (
     <div className={clsx('reader-window', { 'is-focus': isFocus })}>

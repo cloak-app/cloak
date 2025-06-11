@@ -1,6 +1,7 @@
-use crate::commands::shortcut::AppShortcut;
-use crate::state::AppStoreKey;
-use crate::utils::*;
+use crate::utils::shortcut::AppShortcut;
+use crate::utils::state::AppStoreKey;
+use crate::utils::store::set_to_app_store;
+use crate::utils::window::{close_reader_window, open_reader_window};
 use serde_json::Value;
 use tauri::Manager;
 use tauri_plugin_global_shortcut::Shortcut;
@@ -149,6 +150,15 @@ pub fn set_boss_key_shortcut(app_handle: tauri::AppHandle, shortcut: String) -> 
     let shortcut = shortcut.parse::<Shortcut>().map_err(|e| e.to_string())?;
 
     AppShortcut::register_shortcut(&app_handle, AppShortcut::BossKey(shortcut))?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub fn unset_shortcut(app_handle: tauri::AppHandle, shortcut: String) -> Result<(), String> {
+    let shortcut = shortcut.parse::<Shortcut>().map_err(|e| e.to_string())?;
+
+    AppShortcut::unregister_shortcut(&app_handle, shortcut)?;
 
     Ok(())
 }

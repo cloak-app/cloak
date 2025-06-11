@@ -80,6 +80,9 @@ dependencies:
   react-hook-form:
     specifier: ^7.57.0
     version: 7.57.0(react@19.1.0)
+  react-hotkeys-hook:
+    specifier: ^5.1.0
+    version: 5.1.0(react-dom@19.1.0)(react@19.1.0)
   react-router:
     specifier: ^7.6.2
     version: 7.6.2(react-dom@19.1.0)(react@19.1.0)
@@ -3719,6 +3722,16 @@ packages:
       react: ^16.8.0 || ^17 || ^18 || ^19
     dependencies:
       react: 19.1.0
+    dev: false
+
+  /react-hotkeys-hook@5.1.0(react-dom@19.1.0)(react@19.1.0):
+    resolution: {integrity: sha512-GCNGXjBzV9buOS3REoQFmSmE4WTvBhYQ0YrAeeMZI83bhXg3dRWsLHXDutcVDdEjwJqJCxk5iewWYX5LtFUd7g==}
+    peerDependencies:
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+    dependencies:
+      react: 19.1.0
+      react-dom: 19.1.0(react@19.1.0)
     dev: false
 
   /react-refresh@0.17.0:

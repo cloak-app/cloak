@@ -1,7 +1,8 @@
-use crate::commands::novel;
+use crate::commands::reader;
 use crate::db::Db;
-use crate::state::{AppState, AppStoreKey};
-use crate::utils::{get_from_app_store, hide_all_windows};
+use crate::utils::state::{AppState, AppStoreKey};
+use crate::utils::store::get_from_app_store;
+use crate::utils::window::{hide_all_windows, show_all_windows};
 use std::sync::Mutex;
 use tauri::{App, AppHandle, Manager};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
@@ -48,13 +49,6 @@ impl AppShortcut {
     ) -> Result<(), String> {
         let shortcut = app_shortcut.get_shortcut();
 
-        // 先注销之前的快捷键
-        app_handle
-            .global_shortcut()
-            .unregister(shortcut)
-            .map_err(|err| format!("Failed to unregister previous shortcut '{}'", err))?;
-
-        // 新增快捷键
         app_handle
             .global_shortcut()
             .on_shortcut(shortcut, move |app_handle, scut, event| {
@@ -64,18 +58,47 @@ impl AppShortcut {
                 if scut == &shortcut && ShortcutState::Pressed == event.state() {
                     match app_shortcut {
                         AppShortcut::NextLine(_) => {
-                            tauri::async_runtime::block_on(novel::next_line(db, state)).unwrap();
+                            tauri::async_runtime::block_on(reader::next_line(
+                                app_handle.clone(),
+                                db,
+                                state,
+                            ))
+                            .unwrap();
                         }
                         AppShortcut::PrevLine(_) => {
-                            tauri::async_runtime::block_on(novel::prev_line(db, state)).unwrap();
+                            tauri::async_runtime::block_on(reader::prev_line(
+                                app_handle.clone(),
+                                db,
+                                state,
+                            ))
+                            .unwrap();
                         }
                         AppShortcut::BossKey(_) => {
-                            hide_all_windows(app_handle).unwrap();
+                            let windows = app_handle.webview_windows();
+
+                            let has_show_window = windows
+                                .iter()
+                                .any(|(_, window)| window.is_visible().unwrap());
+
+                            if has_show_window {
+                                hide_all_windows(app_handle).unwrap();
+                            } else {
+                                show_all_windows(app_handle).unwrap();
+                            }
                         }
                     }
                 }
             })
             .map_err(|err| format!("Failed to register new shortcut '{}'", err))?;
+
+        Ok(())
+    }
+
+    pub fn unregister_shortcut(app_handle: &AppHandle, shortcut: Shortcut) -> Result<(), String> {
+        app_handle
+            .global_shortcut()
+            .unregister(shortcut)
+            .map_err(|err| format!("Failed to unregister previous shortcut '{}'", err))?;
 
         Ok(())
     }
