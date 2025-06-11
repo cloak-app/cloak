@@ -9,6 +9,7 @@ use crate::utils::reader::NovelReader;
 use crate::utils::shortcut::AppShortcut;
 use crate::utils::state::{AppState, AppStoreKey};
 use crate::utils::store::get_from_app_store;
+use crate::utils::update::update;
 use crate::utils::window::{open_reader_window, open_settings_window, show_all_windows};
 use std::sync::Mutex;
 use tauri::{menu::*, tray::TrayIconBuilder, Manager, RunEvent};
@@ -17,6 +18,7 @@ use tauri_plugin_dialog::{DialogExt, MessageDialogButtons, MessageDialogKind};
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_store::Builder::new().build())
@@ -68,6 +70,12 @@ pub fn run() {
             config::unset_shortcut,
         ])
         .setup(|app| {
+            /* ---------------------------------- 检查更新 ---------------------------------- */
+            let handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                update(handle).await.unwrap();
+            });
+
             /* -------------------------------- 初始化全局上下文 -------------------------------- */
             tauri::async_runtime::block_on(async {
                 let db = setup_db(app).await;
