@@ -9,18 +9,39 @@ use crate::utils::reader::NovelReader;
 use crate::utils::shortcut::AppShortcut;
 use crate::utils::state::{AppState, AppStoreKey};
 use crate::utils::store::get_from_app_store;
-use crate::utils::window::{open_reader_window, open_settings_window};
+use crate::utils::update::update;
+use crate::utils::window::{open_reader_window, open_settings_window, show_all_windows};
 use std::sync::Mutex;
 use tauri::{menu::*, tray::TrayIconBuilder, Manager, RunEvent};
+use tauri_plugin_dialog::{DialogExt, MessageDialogButtons, MessageDialogKind};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_single_instance::init(|app_handle, _, _| {
+            let windows = app_handle.webview_windows();
+            let has_show_window = windows
+                .iter()
+                .any(|(_, window)| window.is_visible().unwrap());
+
+            if has_show_window {
+                show_all_windows(app_handle).unwrap();
+            } else {
+                app_handle
+                    .dialog()
+                    .message("Cloak 已经在运行中，请从托盘打开窗口")
+                    .kind(MessageDialogKind::Info)
+                    .title("Cloak 正在运行")
+                    .buttons(MessageDialogButtons::OkCustom("我知道了".to_string()))
+                    .show(|_| ());
+            }
+        }))
         .invoke_handler(tauri::generate_handler![
             // 小说相关
             novel::add_novel,
@@ -49,6 +70,12 @@ pub fn run() {
             config::unset_shortcut,
         ])
         .setup(|app| {
+            /* ---------------------------------- 检查更新 ---------------------------------- */
+            let handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                update(handle).await.unwrap();
+            });
+
             /* -------------------------------- 初始化全局上下文 -------------------------------- */
             tauri::async_runtime::block_on(async {
                 let db = setup_db(app).await;
