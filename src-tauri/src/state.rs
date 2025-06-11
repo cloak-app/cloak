@@ -4,6 +4,7 @@ pub struct AppState {
     pub novel_reader: Option<NovelReader>,
 }
 
+#[derive(Clone, Copy)]
 pub enum AppStoreKey {
     LastReadNovelId,
     DockVisibility,
@@ -15,6 +16,9 @@ pub enum AppStoreKey {
     FontWeight,
     FontColor,
     BackgroundColor,
+    NextLineShortcut,
+    PrevLineShortcut,
+    BossKeyShortcut,
 }
 
 impl AppStoreKey {
@@ -30,6 +34,9 @@ impl AppStoreKey {
             AppStoreKey::FontWeight => "font_weight",
             AppStoreKey::FontColor => "font_color",
             AppStoreKey::BackgroundColor => "background_color",
+            AppStoreKey::NextLineShortcut => "next_line_shortcut",
+            AppStoreKey::PrevLineShortcut => "prev_line_shortcut",
+            AppStoreKey::BossKeyShortcut => "boss_key_shortcut",
         }
     }
 }

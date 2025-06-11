@@ -1,8 +1,12 @@
+use crate::commands::shortcut::AppShortcut;
 use crate::state::AppStoreKey;
 use crate::utils::*;
 use serde_json::Value;
 use tauri::Manager;
+use tauri_plugin_global_shortcut::Shortcut;
 use tauri_plugin_store::StoreExt;
+
+/* ---------------------------------- 基础设置 ---------------------------------- */
 
 #[tauri::command]
 pub fn get_config(app_handle: tauri::AppHandle) -> Result<Value, String> {
@@ -67,6 +71,8 @@ pub fn set_transparent(
     Ok(())
 }
 
+/* ---------------------------------- 阅读设置 ---------------------------------- */
+
 #[tauri::command]
 pub fn set_font_size(app_handle: tauri::AppHandle, font_size: i64) -> Result<(), String> {
     set_to_app_store(&app_handle, AppStoreKey::FontSize, &font_size)?;
@@ -103,5 +109,46 @@ pub fn set_background_color(
     background_color: String,
 ) -> Result<(), String> {
     set_to_app_store(&app_handle, AppStoreKey::BackgroundColor, &background_color)?;
+    Ok(())
+}
+
+/* ---------------------------------- 快捷键设置 --------------------------------- */
+
+#[tauri::command]
+pub fn set_next_line_shortcut(
+    app_handle: tauri::AppHandle,
+    shortcut: String,
+) -> Result<(), String> {
+    set_to_app_store(&app_handle, AppStoreKey::NextLineShortcut, &shortcut)?;
+
+    let shortcut = shortcut.parse::<Shortcut>().map_err(|e| e.to_string())?;
+
+    AppShortcut::register_shortcut(&app_handle, AppShortcut::NextLine(shortcut))?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub fn set_prev_line_shortcut(
+    app_handle: tauri::AppHandle,
+    shortcut: String,
+) -> Result<(), String> {
+    set_to_app_store(&app_handle, AppStoreKey::PrevLineShortcut, &shortcut)?;
+
+    let shortcut = shortcut.parse::<Shortcut>().map_err(|e| e.to_string())?;
+
+    AppShortcut::register_shortcut(&app_handle, AppShortcut::PrevLine(shortcut))?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub fn set_boss_key_shortcut(app_handle: tauri::AppHandle, shortcut: String) -> Result<(), String> {
+    set_to_app_store(&app_handle, AppStoreKey::BossKeyShortcut, &shortcut)?;
+
+    let shortcut = shortcut.parse::<Shortcut>().map_err(|e| e.to_string())?;
+
+    AppShortcut::register_shortcut(&app_handle, AppShortcut::BossKey(shortcut))?;
+
     Ok(())
 }

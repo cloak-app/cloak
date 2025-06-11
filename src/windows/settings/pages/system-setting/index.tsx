@@ -5,6 +5,7 @@ import { useRequest } from 'ahooks';
 import { HelpCircle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import ShortcutRecorder from './components/shortcut-recorder';
 import {
   Form,
   FormControl,
@@ -28,6 +29,7 @@ const formSchema = z.object({
   dock_visibility: z.boolean(),
   always_on_top: z.boolean(),
   transparent: z.boolean(),
+  shortcut: z.array(z.string()),
 });
 
 const SystemSetting: React.FC = () => {
@@ -68,7 +70,7 @@ const SystemSetting: React.FC = () => {
 
   if (loading)
     return (
-      <div className="space-y-8">
+      <div className="space-y-4">
         {Array.from({ length: 3 }).map((_, index) => (
           <div key={index} className="space-y-2">
             <div className="flex items-center gap-2">
@@ -84,7 +86,8 @@ const SystemSetting: React.FC = () => {
 
   return (
     <Form {...form}>
-      <form className="space-y-8 p-4">
+      <form className="space-y-4 w-full flex flex-col gap-4 p-4 h-full">
+        <div className="border-b pb-2 text-lg font-semibold">基本设置</div>
         <FormField
           control={form.control}
           name="dock_visibility"
@@ -147,6 +150,20 @@ const SystemSetting: React.FC = () => {
                 <Switch checked={value} onCheckedChange={onChange} {...rest} />
               </FormControl>
               <FormDescription>开启后，阅读器窗口将变为透明</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <div className="border-b pb-2 text-lg font-semibold">快捷键设置</div>
+        <FormField
+          control={form.control}
+          name="shortcut"
+          render={({ field: { value, onChange, ...rest } }) => (
+            <FormItem>
+              <FormLabel>翻页下一页</FormLabel>
+              <FormControl>
+                <ShortcutRecorder value={value} onChange={onChange} {...rest} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

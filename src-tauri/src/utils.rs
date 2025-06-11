@@ -108,3 +108,13 @@ pub fn open_settings_window(app_handle: &AppHandle) -> Result<(), String> {
 
     Ok(())
 }
+
+pub fn hide_all_windows(app_handle: &AppHandle) -> Result<(), String> {
+    let windows = app_handle.webview_windows();
+
+    for (_, window) in windows {
+        window.hide().unwrap();
+    }
+
+    Ok(())
+}

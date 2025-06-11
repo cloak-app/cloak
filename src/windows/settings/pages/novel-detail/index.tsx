@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { safeDivide } from '@/lib/number';
 import { Chapter, Reader } from '@/types';
 
@@ -88,20 +87,15 @@ const NovelDetail: React.FC = () => {
 
   return (
     <div className="w-full flex flex-col gap-4 p-4 h-full">
-      <div className="text-lg font-bold">{novel?.title}</div>
-      <Separator />
-      <div className="text-sm leading-none font-medium text-muted-foreground">
-        阅读进度
-      </div>
+      <div className="border-b pb-2 text-lg font-semibold">{novel?.title}</div>
+      <div className="text-sm leading-none font-medium">阅读进度</div>
       <div className="flex items-center gap-2">
         <Progress className="w-3/5" value={progress} />
         <span className="text-sm text-muted-foreground">
           {progress.toFixed(2)}%
         </span>
       </div>
-      <div className="text-sm leading-none font-medium text-muted-foreground">
-        章节列表
-      </div>
+      <div className="text-sm leading-none font-medium">章节列表</div>
       <ScrollArea className="max-h-80 rounded-md border" ref={scrollAreaRef}>
         <div className="flex flex-col p-2 gap-2">
           {chapters?.map((chapter) => (

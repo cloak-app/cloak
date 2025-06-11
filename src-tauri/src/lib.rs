@@ -4,7 +4,7 @@ mod reader;
 mod state;
 mod utils;
 
-use crate::commands::{config, novel};
+use crate::commands::{config, novel, shortcut};
 use crate::db::setup_db;
 use crate::reader::NovelReader;
 use crate::state::{AppState, AppStoreKey};
@@ -21,6 +21,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
+            // 小说相关
             novel::add_novel,
             novel::get_novel_list,
             novel::open_novel,
@@ -29,6 +30,7 @@ pub fn run() {
             novel::set_line_num,
             novel::next_line,
             novel::prev_line,
+            // 配置相关
             config::get_config,
             config::set_dock_visibility,
             config::set_always_on_top,
@@ -39,6 +41,9 @@ pub fn run() {
             config::set_font_weight,
             config::set_font_color,
             config::set_background_color,
+            config::set_next_line_shortcut,
+            config::set_prev_line_shortcut,
+            config::set_boss_key_shortcut,
         ])
         .setup(|app| {
             /* -------------------------------- 初始化全局上下文 -------------------------------- */
@@ -58,6 +63,11 @@ pub fn run() {
 
                 app.manage(db);
                 app.manage(Mutex::new(AppState { novel_reader }));
+            });
+
+            /* --------------------------------- 注册全局快捷键 -------------------------------- */
+            shortcut::AppShortcut::init(app).unwrap_or_else(|e| {
+                println!("Failed to register global shortcuts: {}", e);
             });
 
             /* ---------------------------------- 系统设置 ---------------------------------- */

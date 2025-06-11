@@ -1,6 +1,7 @@
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import React, { useEffect } from 'react';
-import { ReaderWindow, SettingsWindow } from './windows';
+import ReaderWindow from './windows/reader';
+import SettingsWindow from './windows/settings';
 
 type Page = 'reader' | 'settings';
 

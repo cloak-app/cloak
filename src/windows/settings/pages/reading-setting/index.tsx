@@ -37,7 +37,7 @@ const ReadingSetting: React.FC = () => {
 
   if (loading)
     return (
-      <div className="space-y-8">
+      <div className="space-y-4">
         {Array.from({ length: 3 }).map((_, index) => (
           <div key={index} className="space-y-2">
             <div className="flex items-center gap-2">
@@ -53,7 +53,7 @@ const ReadingSetting: React.FC = () => {
 
   return (
     <Form {...form}>
-      <form className="space-y-8 p-4">
+      <form className="space-y-4 w-full flex flex-col gap-4 p-4 h-full">
         <FormField
           control={form.control}
           name="font_size"
