@@ -6,6 +6,7 @@ use crate::utils::state::{AppState, AppStoreKey};
 use crate::utils::store::set_to_app_store;
 use std::fs::{copy, File};
 use std::io::{BufRead, BufReader};
+use std::path::Path;
 use std::sync::Mutex;
 use tauri::Manager;
 
@@ -15,16 +16,18 @@ pub async fn add_novel(
     db: tauri::State<'_, Db>,
     path: &str,
 ) -> Result<(), String> {
-    let filename = path.split("/").last().ok_or("Invalid file path")?;
+    let filepath = Path::new(path);
+
+    // 校验文件是否存在
+    if !filepath.exists() {
+        return Err("File does not exist".to_string());
+    }
+
+    let filename = filepath.file_name().unwrap().to_str().unwrap();
 
     // 校验文件后缀名为 .txt
     if !filename.ends_with(".txt") {
         return Err("File must have a `.txt` extension".to_string());
-    }
-
-    // 校验文件是否存在
-    if !std::path::Path::new(path).exists() {
-        return Err("File does not exist".to_string());
     }
 
     // 获取文件行数
