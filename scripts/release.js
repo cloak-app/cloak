@@ -160,6 +160,8 @@ async function main() {
     console.error(`[ERROR]: Failed to create or push git tag: v${newVersion}`);
     process.exit(0);
   }
+
+  process.exit(0);
 }
 
 main();
