@@ -3,7 +3,7 @@ use crate::utils::state::AppStoreKey;
 use crate::utils::store::set_to_app_store;
 use crate::utils::window::{close_reader_window, open_reader_window};
 use serde_json::Value;
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 use tauri_plugin_global_shortcut::Shortcut;
 use tauri_plugin_store::StoreExt;
 
@@ -77,39 +77,49 @@ pub fn set_transparent(
 #[tauri::command]
 pub fn set_font_size(app_handle: tauri::AppHandle, font_size: i64) -> Result<(), String> {
     set_to_app_store(&app_handle, AppStoreKey::FontSize, &font_size)?;
+    app_handle.emit("config-change", 0).unwrap();
     Ok(())
+}
+
+#[tauri::command]
+pub fn get_all_font_families() -> Result<Vec<String>, String> {
+    let source = font_kit::source::SystemSource::new();
+    let font_list = source.all_families().map_err(|e| e.to_string())?;
+    Ok(font_list)
 }
 
 #[tauri::command]
 pub fn set_font_family(app_handle: tauri::AppHandle, font_family: String) -> Result<(), String> {
     set_to_app_store(&app_handle, AppStoreKey::FontFamily, &font_family)?;
+    app_handle.emit("config-change", 0).unwrap();
     Ok(())
 }
 
 #[tauri::command]
-pub fn set_line_height(app_handle: tauri::AppHandle, line_height: i64) -> Result<(), String> {
+pub fn set_line_height(app_handle: tauri::AppHandle, line_height: f64) -> Result<(), String> {
     set_to_app_store(&app_handle, AppStoreKey::LineHeight, &line_height)?;
+    app_handle.emit("config-change", 0).unwrap();
+    Ok(())
+}
+
+#[tauri::command]
+pub fn set_letter_spacing(app_handle: tauri::AppHandle, letter_spacing: i64) -> Result<(), String> {
+    set_to_app_store(&app_handle, AppStoreKey::LetterSpacing, &letter_spacing)?;
+    app_handle.emit("config-change", 0).unwrap();
     Ok(())
 }
 
 #[tauri::command]
 pub fn set_font_weight(app_handle: tauri::AppHandle, font_weight: i64) -> Result<(), String> {
     set_to_app_store(&app_handle, AppStoreKey::FontWeight, &font_weight)?;
+    app_handle.emit("config-change", 0).unwrap();
     Ok(())
 }
 
 #[tauri::command]
 pub fn set_font_color(app_handle: tauri::AppHandle, font_color: String) -> Result<(), String> {
     set_to_app_store(&app_handle, AppStoreKey::FontColor, &font_color)?;
-    Ok(())
-}
-
-#[tauri::command]
-pub fn set_background_color(
-    app_handle: tauri::AppHandle,
-    background_color: String,
-) -> Result<(), String> {
-    set_to_app_store(&app_handle, AppStoreKey::BackgroundColor, &background_color)?;
+    app_handle.emit("config-change", 0).unwrap();
     Ok(())
 }
 

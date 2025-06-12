@@ -2,6 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { useRequest } from 'ahooks';
 import { ChevronRight, LocateFixed } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -80,6 +81,22 @@ const NovelDetail: React.FC = () => {
   }, [scrollIntoView]);
 
   const progress = safeDivide(line_num, novel?.total_lines) * 100;
+
+  if (!data)
+    return (
+      <div className="w-full h-full text-sm">
+        <div className="mt-20 text-muted-foreground text-center leading-7 ">
+          暂无阅读中的小说，前往
+          <Link
+            className="text-primary underline underline-offset-4 mx-1"
+            to="/novel-list"
+          >
+            小说列表
+          </Link>
+          打开一本新的小说
+        </div>
+      </div>
+    );
 
   return (
     <div className="w-full flex flex-col gap-4 p-4 h-full">

@@ -36,8 +36,8 @@ export interface Config {
   font_weight?: number;
   /** 字体颜色 */
   font_color?: string;
-  /** 背景颜色 */
-  background_color?: string;
+  /** 字间距 */
+  letter_spacing?: number;
   /* ---------------------------------- 快捷键设置 --------------------------------- */
   /** 下一行快捷键 */
   next_line_shortcut?: string;

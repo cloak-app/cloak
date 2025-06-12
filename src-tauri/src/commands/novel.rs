@@ -8,7 +8,7 @@ use std::fs::{copy, File};
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::sync::Mutex;
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 
 #[tauri::command]
 pub async fn add_novel(
@@ -77,14 +77,14 @@ pub async fn get_novel_list(db: tauri::State<'_, Db>) -> Result<Vec<Novel>, Stri
 
 #[tauri::command]
 pub async fn open_novel(
-    app: tauri::AppHandle,
+    app_handle: tauri::AppHandle,
     db: tauri::State<'_, Db>,
     state: tauri::State<'_, Mutex<AppState>>,
     id: i64,
 ) -> Result<(), String> {
     let novel = get_novel_by_id(&*db, id).await?;
 
-    set_to_app_store(&app, AppStoreKey::LastReadNovelId, novel.id)?;
+    set_to_app_store(&app_handle, AppStoreKey::LastReadNovelId, novel.id)?;
 
     // 创建 reader 并更新状态
     let reader = NovelReader::new(novel);
@@ -92,6 +92,9 @@ pub async fn open_novel(
     if let Ok(reader) = reader {
         let mut state = state.lock().map_err(|e| e.to_string())?;
         state.novel_reader = Some(reader);
+
+        app_handle.emit("reader-line-num-changed", 0).unwrap();
+
         Ok(())
     } else {
         Err(format!("Failed to open novel!"))

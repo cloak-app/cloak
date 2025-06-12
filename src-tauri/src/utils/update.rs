@@ -1,9 +1,11 @@
+use crate::utils::window::open_update_window;
+use tauri::{AppHandle, Emitter};
 use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
 use tauri_plugin_updater::UpdaterExt;
 
-pub async fn update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
-    if let Some(update) = app.updater()?.check().await? {
-        let answer = app
+pub async fn update(app_handle: AppHandle) -> tauri_plugin_updater::Result<()> {
+    if let Some(update) = app_handle.updater()?.check().await? {
+        let answer = app_handle
             .dialog()
             .message(format!("发现新版本{}，是否更新？", update.version))
             .title("检查更新")
@@ -14,21 +16,27 @@ pub async fn update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
             .blocking_show();
 
         if answer {
+            open_update_window(&app_handle).unwrap();
+
             let mut downloaded = 0;
 
             update
                 .download_and_install(
                     |chunk_length, content_length| {
                         downloaded += chunk_length;
-                        println!("downloaded {downloaded} from {content_length:?}");
+
+                        if let Some(content_length) = content_length {
+                            let progress = (downloaded as f64 / content_length as f64) * 100.0;
+                            app_handle.emit("update-progress", progress).unwrap();
+                        }
                     },
                     || {
-                        println!("download finished");
+                        app_handle.emit("update-finished", ()).unwrap();
                     },
                 )
                 .await?;
 
-            let answer = app
+            let answer = app_handle
                 .dialog()
                 .message("更新完成，是否重启？")
                 .title("检查更新")
@@ -39,7 +47,7 @@ pub async fn update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
                 .blocking_show();
 
             if answer {
-                app.restart();
+                app_handle.restart();
             }
         }
     }

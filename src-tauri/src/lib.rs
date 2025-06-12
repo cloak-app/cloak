@@ -10,7 +10,9 @@ use crate::utils::shortcut::AppShortcut;
 use crate::utils::state::{AppState, AppStoreKey};
 use crate::utils::store::get_from_app_store;
 use crate::utils::update::update;
-use crate::utils::window::{open_reader_window, open_settings_window, show_all_windows};
+use crate::utils::window::{
+    open_reader_window, open_settings_window, open_update_window, show_all_windows,
+};
 use std::sync::Mutex;
 use tauri::{menu::*, tray::TrayIconBuilder, Manager, RunEvent};
 use tauri_plugin_dialog::{DialogExt, MessageDialogButtons, MessageDialogKind};
@@ -59,17 +61,20 @@ pub fn run() {
             config::set_always_on_top,
             config::set_transparent,
             config::set_font_size,
+            config::get_all_font_families,
             config::set_font_family,
             config::set_line_height,
             config::set_font_weight,
             config::set_font_color,
-            config::set_background_color,
+            config::set_letter_spacing,
             config::set_next_line_shortcut,
             config::set_prev_line_shortcut,
             config::set_boss_key_shortcut,
             config::unset_shortcut,
         ])
         .setup(|app| {
+            open_update_window(app.handle()).unwrap();
+
             /* ---------------------------------- 检查更新 ---------------------------------- */
             let handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {

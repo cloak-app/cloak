@@ -43,7 +43,21 @@ pub fn open_settings_window(app_handle: &AppHandle) -> Result<(), String> {
         window.set_focus().unwrap();
     } else {
         WebviewWindowBuilder::new(app_handle, "settings", WebviewUrl::default())
-            .inner_size(800.0, 600.0)
+            .min_inner_size(800.0, 600.0)
+            .build()
+            .unwrap();
+    }
+
+    Ok(())
+}
+
+pub fn open_update_window(app_handle: &AppHandle) -> Result<(), String> {
+    let window = app_handle.get_webview_window("update");
+
+    if let Some(window) = window {
+        window.set_focus().unwrap();
+    } else {
+        WebviewWindowBuilder::new(app_handle, "update", WebviewUrl::default())
             .build()
             .unwrap();
     }

@@ -50,9 +50,7 @@ pub async fn set_line_num(
         novel_id = reader.novel.id;
     }
 
-    app_handle
-        .emit("reader-line-num-changed", &novel_id)
-        .unwrap();
+    app_handle.emit("reader-line-num-changed", 0).unwrap();
 
     save_novel(&*db, novel_id, line_num as i64).await?;
 
@@ -79,9 +77,7 @@ pub async fn next_line(
         line_num = reader.line_num;
     }
 
-    app_handle
-        .emit("reader-line-num-changed", &novel_id)
-        .unwrap();
+    app_handle.emit("reader-line-num-changed", 0).unwrap();
 
     save_novel(&*db, novel_id, line_num as i64).await?;
 
@@ -108,9 +104,7 @@ pub async fn prev_line(
         line_num = reader.line_num;
     }
 
-    app_handle
-        .emit("reader-line-num-changed", &novel_id)
-        .unwrap();
+    app_handle.emit("reader-line-num-changed", 0).unwrap();
 
     save_novel(&*db, novel_id, line_num as i64).await?;
 

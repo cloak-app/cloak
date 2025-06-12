@@ -1,4 +1,4 @@
-import { useLatest, } from 'ahooks';
+import { useLatest } from 'ahooks';
 import { useEffect, useRef } from 'react';
 import { FieldValues, Path, UseFormReturn } from 'react-hook-form';
 
@@ -13,7 +13,10 @@ export const useFormWatch = <
 >(
   form: UseFormReturn<T>,
   name: P,
-  callback: (value: WatchValue<T, P>, previousValue: WatchValue<T, P> | undefined) => void,
+  callback: (
+    value: WatchValue<T, P>,
+    previousValue: WatchValue<T, P> | undefined,
+  ) => void,
 ): void => {
   const callbackRef = useLatest(callback);
   const previousValueRef = useRef<WatchValue<T, P>>();
@@ -32,7 +35,10 @@ export const useFormWatch = <
           }, {} as WatchValue<T, P>);
           callbackRef.current(result, previousValueRef.current);
         } else {
-          callbackRef.current(values[name as Path<T>] as WatchValue<T, P>, previousValueRef.current);
+          callbackRef.current(
+            values[name as Path<T>] as WatchValue<T, P>,
+            previousValueRef.current,
+          );
         }
 
         previousValueRef.current = values[name as Path<T>] as WatchValue<T, P>;

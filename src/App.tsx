@@ -2,12 +2,14 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 import React, { useEffect } from 'react';
 import ReaderWindow from './windows/reader';
 import SettingsWindow from './windows/settings';
+import UpdateWindow from './windows/update';
 
-type Page = 'reader' | 'settings';
+type Page = 'reader' | 'settings' | 'update';
 
 const PAGE: Record<Page, React.ReactNode> = {
   reader: <ReaderWindow />,
   settings: <SettingsWindow />,
+  update: <UpdateWindow />,
 };
 
 const App = () => {
