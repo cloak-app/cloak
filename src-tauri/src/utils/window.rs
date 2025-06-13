@@ -58,6 +58,7 @@ pub fn open_update_window(app_handle: &AppHandle) -> Result<(), String> {
         window.set_focus().unwrap();
     } else {
         WebviewWindowBuilder::new(app_handle, "update", WebviewUrl::default())
+            .min_inner_size(800.0, 600.0)
             .build()
             .unwrap();
     }
