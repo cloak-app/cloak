@@ -5,7 +5,7 @@ use crate::store::get_from_app_store;
 use crate::store::model::AppStoreKey;
 use crate::utils::window::{hide_all_windows, show_all_windows};
 use std::sync::Mutex;
-use tauri::{App, AppHandle, Manager};
+use tauri::{AppHandle, Manager};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
 
 pub enum AppShortcut {
@@ -15,39 +15,62 @@ pub enum AppShortcut {
 }
 
 impl AppShortcut {
-    pub fn init(app: &App) -> Result<(), String> {
-        let app_handle = app.handle();
-
-        const SHORTCUTS: [AppStoreKey; 3] = [
-            AppStoreKey::NextLineShortcut,
-            AppStoreKey::PrevLineShortcut,
-            AppStoreKey::BossKeyShortcut,
-        ];
-
-        for key in SHORTCUTS {
+    pub fn activate_shortcuts(
+        app_handle: &AppHandle,
+        keys: Vec<AppStoreKey>,
+    ) -> Result<(), String> {
+        for key in keys {
             get_from_app_store::<String>(app_handle, key)?
                 .map(|v| v.parse::<Shortcut>())
                 .transpose()
                 .map_err(|e| e.to_string())?
                 .map(move |shortcut| {
                     let app_shortcut = match key {
-                        AppStoreKey::NextLineShortcut => AppShortcut::NextLine(shortcut),
-                        AppStoreKey::PrevLineShortcut => AppShortcut::PrevLine(shortcut),
-                        AppStoreKey::BossKeyShortcut => AppShortcut::BossKey(shortcut),
+                        AppStoreKey::NextLineShortcut => Self::NextLine(shortcut),
+                        AppStoreKey::PrevLineShortcut => Self::PrevLine(shortcut),
+                        AppStoreKey::BossKeyShortcut => Self::BossKey(shortcut),
                         _ => unreachable!(),
                     };
 
-                    AppShortcut::register_shortcut(app_handle, app_shortcut).unwrap();
+                    Self::register_shortcut(app_handle, app_shortcut).unwrap();
                 });
         }
+        Ok(())
+    }
+
+    pub fn deactivate_shortcuts(
+        app_handle: &AppHandle,
+        keys: Vec<AppStoreKey>,
+    ) -> Result<(), String> {
+        for key in keys {
+            get_from_app_store::<String>(app_handle, key)?
+                .map(|v| v.parse::<Shortcut>())
+                .transpose()
+                .map_err(|e| e.to_string())?
+                .map(move |shortcut| {
+                    let app_shortcut = match key {
+                        AppStoreKey::NextLineShortcut => Self::NextLine(shortcut),
+                        AppStoreKey::PrevLineShortcut => Self::PrevLine(shortcut),
+                        AppStoreKey::BossKeyShortcut => Self::BossKey(shortcut),
+                        _ => unreachable!(),
+                    };
+
+                    Self::unregister_shortcut(app_handle, app_shortcut).unwrap();
+                });
+        }
+        Ok(())
+    }
+
+    pub fn unregister_all_shortcuts(app_handle: &AppHandle) -> Result<(), String> {
+        app_handle
+            .global_shortcut()
+            .unregister_all()
+            .map_err(|err| format!("Failed to unregister all shortcuts '{}'", err))?;
 
         Ok(())
     }
 
-    pub fn register_shortcut(
-        app_handle: &AppHandle,
-        app_shortcut: AppShortcut,
-    ) -> Result<(), String> {
+    fn register_shortcut(app_handle: &AppHandle, app_shortcut: AppShortcut) -> Result<(), String> {
         let shortcut = app_shortcut.get_shortcut();
 
         app_handle
@@ -58,7 +81,7 @@ impl AppShortcut {
 
                 if scut == &shortcut && ShortcutState::Pressed == event.state() {
                     match app_shortcut {
-                        AppShortcut::NextLine(_) => {
+                        Self::NextLine(_) => {
                             tauri::async_runtime::block_on(reader::next_line(
                                 app_handle.clone(),
                                 db,
@@ -66,7 +89,7 @@ impl AppShortcut {
                             ))
                             .unwrap();
                         }
-                        AppShortcut::PrevLine(_) => {
+                        Self::PrevLine(_) => {
                             tauri::async_runtime::block_on(reader::prev_line(
                                 app_handle.clone(),
                                 db,
@@ -74,7 +97,7 @@ impl AppShortcut {
                             ))
                             .unwrap();
                         }
-                        AppShortcut::BossKey(_) => {
+                        Self::BossKey(_) => {
                             let windows = app_handle.webview_windows();
 
                             let has_show_window = windows
@@ -95,7 +118,12 @@ impl AppShortcut {
         Ok(())
     }
 
-    pub fn unregister_shortcut(app_handle: &AppHandle, shortcut: Shortcut) -> Result<(), String> {
+    fn unregister_shortcut(
+        app_handle: &AppHandle,
+        app_shortcut: AppShortcut,
+    ) -> Result<(), String> {
+        let shortcut = app_shortcut.get_shortcut();
+
         app_handle
             .global_shortcut()
             .unregister(shortcut)
@@ -104,14 +132,6 @@ impl AppShortcut {
         Ok(())
     }
 
-    pub fn unregister_all_shortcuts(app_handle: &AppHandle) -> Result<(), String> {
-        app_handle
-            .global_shortcut()
-            .unregister_all()
-            .map_err(|err| format!("Failed to unregister all shortcuts '{}'", err))?;
-
-        Ok(())
-    }
     fn get_shortcut(&self) -> Shortcut {
         match self {
             Self::NextLine(shortcut) => *shortcut,

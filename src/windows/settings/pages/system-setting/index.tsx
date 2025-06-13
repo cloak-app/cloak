@@ -70,30 +70,18 @@ const SystemSetting: React.FC = () => {
     invoke('set_transparent', { transparent, forceReopen });
   });
 
-  useFormWatch(form, 'next_line_shortcut', (shortcut, previousShortcut) => {
+  useFormWatch(form, 'next_line_shortcut', (shortcut) => {
     if (loading) return;
-
-    console.log('next_line_shortcut', shortcut, previousShortcut);
-
-    if (previousShortcut) {
-      invoke('unset_shortcut', { shortcut: previousShortcut });
-    }
     invoke('set_next_line_shortcut', { shortcut });
   });
 
-  useFormWatch(form, 'prev_line_shortcut', (shortcut, previousShortcut) => {
+  useFormWatch(form, 'prev_line_shortcut', (shortcut) => {
     if (loading) return;
-    if (previousShortcut) {
-      invoke('unset_shortcut', { shortcut: previousShortcut });
-    }
     invoke('set_prev_line_shortcut', { shortcut });
   });
 
-  useFormWatch(form, 'boss_key_shortcut', (shortcut, previousShortcut) => {
+  useFormWatch(form, 'boss_key_shortcut', (shortcut) => {
     if (loading) return;
-    if (previousShortcut) {
-      invoke('unset_shortcut', { shortcut: previousShortcut });
-    }
     invoke('set_boss_key_shortcut', { shortcut });
   });
 

@@ -1,5 +1,5 @@
 import { useLatest } from 'ahooks';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { FieldValues, Path, UseFormReturn } from 'react-hook-form';
 
 type WatchValue<
@@ -13,13 +13,9 @@ export const useFormWatch = <
 >(
   form: UseFormReturn<T>,
   name: P,
-  callback: (
-    value: WatchValue<T, P>,
-    previousValue: WatchValue<T, P> | undefined,
-  ) => void,
+  callback: (value: WatchValue<T, P>) => void,
 ): void => {
   const callbackRef = useLatest(callback);
-  const previousValueRef = useRef<WatchValue<T, P>>();
 
   useEffect(() => {
     const subscription = form.subscribe({
@@ -33,15 +29,10 @@ export const useFormWatch = <
             acc[key] = values[key];
             return acc;
           }, {} as WatchValue<T, P>);
-          callbackRef.current(result, previousValueRef.current);
+          callbackRef.current(result);
         } else {
-          callbackRef.current(
-            values[name as Path<T>] as WatchValue<T, P>,
-            previousValueRef.current,
-          );
+          callbackRef.current(values[name as Path<T>] as WatchValue<T, P>);
         }
-
-        previousValueRef.current = values[name as Path<T>] as WatchValue<T, P>;
       },
     });
 

@@ -15,7 +15,10 @@ use crate::utils::shortcut::AppShortcut;
 use crate::utils::update::update;
 use crate::utils::window::{open_reader_window, open_settings_window, show_all_windows};
 use std::sync::Mutex;
-use tauri::{menu::*, tray::TrayIconBuilder, Manager, RunEvent};
+use tauri::image::Image;
+use tauri::menu::*;
+use tauri::tray::{TrayIconBuilder, TrayIconId};
+use tauri::{Manager, RunEvent};
 use tauri_plugin_dialog::{DialogExt, MessageDialogButtons, MessageDialogKind};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -71,7 +74,6 @@ pub fn run() {
             config::set_next_line_shortcut,
             config::set_prev_line_shortcut,
             config::set_boss_key_shortcut,
-            config::unset_shortcut,
             config::reset_config,
         ])
         .setup(|app| {
@@ -101,13 +103,17 @@ pub fn run() {
                 }
 
                 app.manage(db);
-                app.manage(Mutex::new(AppState { novel_reader }));
+                app.manage(Mutex::new(AppState {
+                    novel_reader,
+                    reading_mode: false,
+                }));
             });
 
             /* --------------------------------- 注册全局快捷键 -------------------------------- */
-            AppShortcut::init(app).unwrap_or_else(|e| {
-                println!("Failed to register global shortcuts: {}", e);
-            });
+            AppShortcut::activate_shortcuts(app.handle(), vec![AppStoreKey::BossKeyShortcut])
+                .unwrap_or_else(|e| {
+                    println!("Failed to register global shortcuts: {}", e);
+                });
 
             /* ---------------------------------- 系统设置 ---------------------------------- */
             #[cfg(target_os = "macos")]
@@ -120,23 +126,30 @@ pub fn run() {
             }
 
             /* --------------------------------- 注册托盘菜单 --------------------------------- */
-
+            let toggle_reading_mode_i = MenuItem::with_id(
+                app,
+                "toggle_reading_mode",
+                "打开阅读模式",
+                true,
+                None::<&str>,
+            )?;
             let open_reader_i =
                 MenuItem::with_id(app, "open_reader", "打开阅读器", true, None::<&str>)?;
             let settings_i = MenuItem::with_id(app, "settings", "设置", true, None::<&str>)?;
             let quit_i = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
 
             let menu = MenuBuilder::new(app)
+                .item(&toggle_reading_mode_i)
                 .item(&open_reader_i)
                 .item(&settings_i)
                 .separator()
                 .item(&quit_i)
                 .build()?;
 
-            TrayIconBuilder::new()
-                .icon(app.default_window_icon().unwrap().clone())
+            let tray_icon = TrayIconBuilder::new()
+                .icon(Image::from_path("../public/tray-icon.ico").unwrap())
                 .menu(&menu)
-                .on_menu_event(|app_handle, event| match event.id.as_ref() {
+                .on_menu_event(move |app_handle, event| match event.id.as_ref() {
                     "quit" => {
                         app_handle.exit(0);
                     }
@@ -146,11 +159,41 @@ pub fn run() {
                     "open_reader" => {
                         open_reader_window(app_handle).unwrap();
                     }
+                    "toggle_reading_mode" => {
+                        let state = app_handle.state::<Mutex<AppState>>();
+                        let mut state = state.lock().unwrap();
+                        state.reading_mode = !state.reading_mode;
+
+                        let tray_icon_id = app_handle.state::<TrayIconId>();
+                        let tray_icon = app_handle.tray_by_id(tray_icon_id.inner()).unwrap();
+
+                        if !state.reading_mode {
+                            let icon = Image::from_path("../public/tray-icon.ico").ok();
+                            tray_icon.set_icon(icon).unwrap();
+                            toggle_reading_mode_i.set_text("打开阅读模式").unwrap();
+                            AppShortcut::deactivate_shortcuts(
+                                app_handle,
+                                vec![AppStoreKey::NextLineShortcut, AppStoreKey::PrevLineShortcut],
+                            )
+                            .unwrap();
+                        } else {
+                            let icon = Image::from_path("../public/tray-icon-active.ico").ok();
+                            tray_icon.set_icon(icon).unwrap();
+                            toggle_reading_mode_i.set_text("关闭阅读模式").unwrap();
+                            AppShortcut::activate_shortcuts(
+                                app_handle,
+                                vec![AppStoreKey::NextLineShortcut, AppStoreKey::PrevLineShortcut],
+                            )
+                            .unwrap();
+                        }
+                    }
                     _ => {
                         panic!("menu item {:?} not handled", event.id);
                     }
                 })
                 .build(app)?;
+
+            app.manage(tray_icon.id().clone());
 
             Ok(())
         })
