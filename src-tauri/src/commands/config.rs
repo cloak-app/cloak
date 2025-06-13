@@ -1,6 +1,6 @@
+use crate::store::model::AppStoreKey;
+use crate::store::{reset_app_store, set_to_app_store};
 use crate::utils::shortcut::AppShortcut;
-use crate::utils::state::AppStoreKey;
-use crate::utils::store::set_to_app_store;
 use crate::utils::window::{close_reader_window, open_reader_window};
 use serde_json::Value;
 use tauri::{Emitter, Manager};
@@ -170,5 +170,11 @@ pub fn unset_shortcut(app_handle: tauri::AppHandle, shortcut: String) -> Result<
 
     AppShortcut::unregister_shortcut(&app_handle, shortcut)?;
 
+    Ok(())
+}
+
+#[tauri::command]
+pub fn reset_config(app_handle: tauri::AppHandle) -> Result<(), String> {
+    reset_app_store(&app_handle)?;
     Ok(())
 }

@@ -1,14 +1,17 @@
 mod commands;
 mod db;
+mod state;
+mod store;
 mod utils;
 
 use crate::commands::{config, novel, reader};
 use crate::db::setup_db;
+use crate::state::model::AppState;
+use crate::store::model::AppStoreKey;
+use crate::store::{get_from_app_store, init_app_store};
 use crate::utils::novel::get_novel_by_id;
 use crate::utils::reader::NovelReader;
 use crate::utils::shortcut::AppShortcut;
-use crate::utils::state::{AppState, AppStoreKey};
-use crate::utils::store::get_from_app_store;
 use crate::utils::update::update;
 use crate::utils::window::{open_reader_window, open_settings_window, show_all_windows};
 use std::sync::Mutex;
@@ -69,15 +72,20 @@ pub fn run() {
             config::set_prev_line_shortcut,
             config::set_boss_key_shortcut,
             config::unset_shortcut,
+            config::reset_config,
         ])
         .setup(|app| {
             /* ---------------------------------- 检查更新 ---------------------------------- */
-            let handle = app.handle().clone();
+            let app_handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {
-                update(handle).await.unwrap();
+                update(app_handle).await.unwrap();
             });
 
             /* -------------------------------- 初始化全局上下文 -------------------------------- */
+            init_app_store(app.handle()).unwrap_or_else(|e| {
+                println!("Failed to initialize app store: {}", e);
+            });
+
             tauri::async_runtime::block_on(async {
                 let db = setup_db(app).await;
 

@@ -1,7 +1,8 @@
 use crate::commands::reader;
 use crate::db::Db;
-use crate::utils::state::{AppState, AppStoreKey};
-use crate::utils::store::get_from_app_store;
+use crate::state::model::AppState;
+use crate::store::get_from_app_store;
+use crate::store::model::AppStoreKey;
 use crate::utils::window::{hide_all_windows, show_all_windows};
 use std::sync::Mutex;
 use tauri::{App, AppHandle, Manager};
@@ -103,6 +104,14 @@ impl AppShortcut {
         Ok(())
     }
 
+    pub fn unregister_all_shortcuts(app_handle: &AppHandle) -> Result<(), String> {
+        app_handle
+            .global_shortcut()
+            .unregister_all()
+            .map_err(|err| format!("Failed to unregister all shortcuts '{}'", err))?;
+
+        Ok(())
+    }
     fn get_shortcut(&self) -> Shortcut {
         match self {
             Self::NextLine(shortcut) => *shortcut,

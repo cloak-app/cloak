@@ -7,8 +7,10 @@ import { useEffect, useState } from 'react';
 import { Config, Novel } from '@/types';
 
 export default function ReaderWindow() {
-  const { data: reader } = useRequest(() => invoke<Novel>('get_novel_reader'));
-  const { data: line, refresh } = useRequest(() => invoke<string>('get_line'));
+  const { data: reader, refresh: refreshReader } = useRequest(() =>
+    invoke<Novel>('get_novel_reader'),
+  );
+  const { data: line, refresh: refreshLine } = useRequest(() => invoke<string>('get_line'));
 
   const { data: config, refresh: refreshConfig } = useRequest(() =>
     invoke<Config>('get_config'),
@@ -17,11 +19,14 @@ export default function ReaderWindow() {
   const [isFocus, setIsFocus] = useState(false);
 
   useEffect(() => {
-    const listener = listen('reader-line-num-changed', () => refresh());
+    const listener = listen('reader-line-num-changed', () => {
+      refreshLine();
+      refreshReader();
+    });
     return () => {
       listener.then((unListen) => unListen());
     };
-  }, [refresh]);
+  }, [refreshLine, refreshReader]);
 
   useEffect(() => {
     const listener = listen('config-change', () => refreshConfig());

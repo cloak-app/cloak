@@ -1,9 +1,10 @@
 use crate::db::model::Novel;
 use crate::db::Db;
+use crate::state::model::AppState;
+use crate::store::model::AppStoreKey;
+use crate::store::set_to_app_store;
 use crate::utils::novel::get_novel_by_id;
 use crate::utils::reader::NovelReader;
-use crate::utils::state::{AppState, AppStoreKey};
-use crate::utils::store::set_to_app_store;
 use std::fs::{copy, File};
 use std::io::{BufRead, BufReader};
 use std::path::Path;

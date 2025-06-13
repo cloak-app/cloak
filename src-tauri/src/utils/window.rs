@@ -1,5 +1,5 @@
-use crate::utils::state::AppStoreKey;
-use crate::utils::store::get_from_app_store;
+use crate::store::get_from_app_store;
+use crate::store::model::AppStoreKey;
 use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindowBuilder};
 
 pub fn open_reader_window(app_handle: &AppHandle) -> Result<(), String> {

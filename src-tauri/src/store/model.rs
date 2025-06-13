@@ -1,9 +1,3 @@
-use crate::utils::reader::NovelReader;
-
-pub struct AppState {
-    pub novel_reader: Option<NovelReader>,
-}
-
 #[derive(Clone, Copy)]
 pub enum AppStoreKey {
     LastReadNovelId,

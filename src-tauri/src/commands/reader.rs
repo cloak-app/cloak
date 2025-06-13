@@ -1,7 +1,7 @@
 use crate::db::Db;
+use crate::state::model::AppState;
 use crate::utils::novel::save_novel;
 use crate::utils::reader::NovelReader;
-use crate::utils::state::AppState;
 use std::sync::Mutex;
 use tauri::Emitter;
 
