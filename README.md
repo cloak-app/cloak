@@ -34,6 +34,7 @@ Go to the [Release page](https://github.com/Xav1erSue/cloak/releases) to downloa
 
 - [ ] Import `EPUB` novel files
 - [ ] Support for custom chapter parsing regular expressions
+- [ ] i18n(currently only supports Chinese)
 
 ### Supported Platforms
 
