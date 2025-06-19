@@ -1,4 +1,4 @@
-import { isMac } from '@/lib/platform';
+import { platform } from '@tauri-apps/plugin-os';
 
 // 系统保留的快捷键
 export const RESERVED_SHORTCUTS = [
@@ -15,6 +15,8 @@ export const RESERVED_SHORTCUTS = [
   ['Control', 'A'],
   ['Control', 'Z'],
 ];
+
+const isMac = platform() === 'macos';
 
 export const KEY_SYMBOLS: Record<string, string> = {
   Control: isMac ? '⌃' : 'Ctrl',

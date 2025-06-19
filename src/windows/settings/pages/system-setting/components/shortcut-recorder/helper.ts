@@ -1,5 +1,7 @@
+import { platform } from '@tauri-apps/plugin-os';
 import { KEY_MAP, KEY_SYMBOLS, MODIFIER_KEYS } from './config';
-import { isMac } from '@/lib/platform';
+
+const isMac = platform() === 'macos';
 
 export const metaOrCtrlKey = (): string => {
   if (isMac) {
