@@ -1,7 +1,8 @@
 import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
 import { useRequest } from 'ahooks';
 import { ChevronRight, LocateFixed } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,37 +16,27 @@ const NovelDetail: React.FC = () => {
     invoke<Reader>('get_novel_reader'),
   );
 
-  const { novel, chapters, line_num } = data ?? {};
+  const { novel, chapters, line_num, current_chapter } = data ?? {};
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  const currentChapter = useMemo(() => {
-    if (!chapters || !line_num) return;
-
-    const currentChapterIndex =
-      chapters.findIndex((chapter) => chapter.start_line > line_num) - 1;
-
-    const index = Math.max(currentChapterIndex, 0);
-
-    return chapters[index];
-  }, [chapters, line_num]);
-
   const isCurrentChapter = (chapter: Chapter) => {
-    return chapter.start_line === currentChapter?.start_line;
+    return chapter.start_line === current_chapter?.start_line;
   };
 
   const handleClick = async (chapter: Chapter) => {
     if (isCurrentChapter(chapter)) return;
 
     await invoke('set_line_num', { lineNum: chapter.start_line });
-    refresh();
   };
 
   const observer = useRef<IntersectionObserver | null>(null);
   const [isLocateButtonVisible, setIsLocateButtonVisible] = useState(false);
 
   useEffect(() => {
-    if (!scrollAreaRef.current || !currentChapter) return;
+    if (!scrollAreaRef.current || !current_chapter) return;
+
+    observer.current?.disconnect();
 
     observer.current = new IntersectionObserver(
       (entries) => setIsLocateButtonVisible(!entries[0].isIntersecting),
@@ -53,19 +44,21 @@ const NovelDetail: React.FC = () => {
     );
 
     const currentChapterElement = document.getElementById(
-      `${novel?.id}-${currentChapter.start_line}`,
+      `${novel?.id}-${current_chapter.start_line}`,
     );
 
     if (!currentChapterElement) return;
 
     observer.current.observe(currentChapterElement);
-  }, [currentChapter, novel]);
+
+    return () => observer.current?.disconnect();
+  }, [current_chapter, novel]);
 
   const scrollIntoView = useCallback(() => {
-    if (!currentChapter) return;
+    if (!current_chapter) return;
 
     const currentChapterElement = document.getElementById(
-      `${novel?.id}-${currentChapter.start_line}`,
+      `${novel?.id}-${current_chapter.start_line}`,
     );
 
     if (!currentChapterElement) return;
@@ -74,11 +67,20 @@ const NovelDetail: React.FC = () => {
       behavior: 'smooth',
       block: 'center',
     });
-  }, [currentChapter, novel]);
+  }, [current_chapter, novel]);
 
   useEffect(() => {
-    scrollIntoView();
+    setTimeout(() => scrollIntoView());
   }, [scrollIntoView]);
+
+  useEffect(() => {
+    const listener = listen('reader-line-num-changed', () => {
+      refresh();
+    });
+    return () => {
+      listener.then((unListen) => unListen());
+    };
+  }, [refresh]);
 
   const progress = safeDivide(line_num, novel?.total_lines) * 100;
 

@@ -12,6 +12,8 @@ pub enum AppStoreKey {
     FontColor,
     NextLineShortcut,
     PrevLineShortcut,
+    NextChapterShortcut,
+    PrevChapterShortcut,
     BossKeyShortcut,
 }
 
@@ -30,6 +32,8 @@ impl AppStoreKey {
             AppStoreKey::LetterSpacing => "letter_spacing",
             AppStoreKey::NextLineShortcut => "next_line_shortcut",
             AppStoreKey::PrevLineShortcut => "prev_line_shortcut",
+            AppStoreKey::NextChapterShortcut => "next_chapter_shortcut",
+            AppStoreKey::PrevChapterShortcut => "prev_chapter_shortcut",
             AppStoreKey::BossKeyShortcut => "boss_key_shortcut",
         }
     }

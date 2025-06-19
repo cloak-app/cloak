@@ -18,6 +18,7 @@ pub fn open_reader_window(app_handle: &AppHandle) -> Result<(), String> {
             .shadow(false)
             .transparent(transparent)
             .always_on_top(always_on_top)
+            .min_inner_size(50.0, 50.0)
             .inner_size(200.0, 100.0)
             .build()
             .unwrap();

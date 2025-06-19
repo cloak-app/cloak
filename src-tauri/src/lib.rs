@@ -57,8 +57,6 @@ pub fn run() {
             reader::get_novel_reader,
             reader::get_line,
             reader::set_line_num,
-            reader::next_line,
-            reader::prev_line,
             // 配置相关
             config::get_config,
             config::set_dock_visibility,
@@ -71,22 +69,17 @@ pub fn run() {
             config::set_font_weight,
             config::set_font_color,
             config::set_letter_spacing,
+            config::reset_config,
+            // 快捷键相关
             config::set_next_line_shortcut,
             config::set_prev_line_shortcut,
+            config::set_next_chapter_shortcut,
+            config::set_prev_chapter_shortcut,
             config::set_boss_key_shortcut,
-            config::reset_config,
         ])
         .setup(|app| {
-            /* ---------------------------------- 检查更新 ---------------------------------- */
-            let app_handle = app.handle().clone();
-            tauri::async_runtime::spawn(async move {
-                update(app_handle).await.unwrap();
-            });
-
             /* -------------------------------- 初始化全局上下文 -------------------------------- */
-            init_app_store(app.handle()).unwrap_or_else(|e| {
-                println!("Failed to initialize app store: {}", e);
-            });
+            init_app_store(app.handle()).unwrap();
 
             tauri::async_runtime::block_on(async {
                 let db = setup_db(app).await;
@@ -111,9 +104,7 @@ pub fn run() {
 
             /* --------------------------------- 注册全局快捷键 -------------------------------- */
             AppShortcut::activate_shortcuts(app.handle(), vec![AppStoreKey::BossKeyShortcut])
-                .unwrap_or_else(|e| {
-                    println!("Failed to register global shortcuts: {}", e);
-                });
+                .unwrap();
 
             /* ---------------------------------- 系统设置 ---------------------------------- */
             #[cfg(target_os = "macos")]
@@ -173,7 +164,12 @@ pub fn run() {
                             toggle_reading_mode_i.set_text("打开阅读模式").unwrap();
                             AppShortcut::deactivate_shortcuts(
                                 app_handle,
-                                vec![AppStoreKey::NextLineShortcut, AppStoreKey::PrevLineShortcut],
+                                vec![
+                                    AppStoreKey::NextLineShortcut,
+                                    AppStoreKey::PrevLineShortcut,
+                                    AppStoreKey::NextChapterShortcut,
+                                    AppStoreKey::PrevChapterShortcut,
+                                ],
                             )
                             .unwrap();
                         } else {
@@ -182,7 +178,12 @@ pub fn run() {
                             toggle_reading_mode_i.set_text("关闭阅读模式").unwrap();
                             AppShortcut::activate_shortcuts(
                                 app_handle,
-                                vec![AppStoreKey::NextLineShortcut, AppStoreKey::PrevLineShortcut],
+                                vec![
+                                    AppStoreKey::NextLineShortcut,
+                                    AppStoreKey::PrevLineShortcut,
+                                    AppStoreKey::NextChapterShortcut,
+                                    AppStoreKey::PrevChapterShortcut,
+                                ],
                             )
                             .unwrap();
                         }
@@ -194,6 +195,12 @@ pub fn run() {
                 .build(app)?;
 
             app.manage(tray_icon.id().clone());
+
+            /* ---------------------------------- 检查更新 ---------------------------------- */
+            let app_handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                update(app_handle).await.unwrap();
+            });
 
             Ok(())
         })

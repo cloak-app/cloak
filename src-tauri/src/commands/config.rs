@@ -147,6 +147,28 @@ pub fn set_prev_line_shortcut(
 }
 
 #[tauri::command]
+pub fn set_next_chapter_shortcut(
+    app_handle: tauri::AppHandle,
+    shortcut: String,
+) -> Result<(), String> {
+    AppShortcut::deactivate_shortcuts(&app_handle, vec![AppStoreKey::NextChapterShortcut])?;
+    set_to_app_store(&app_handle, AppStoreKey::NextChapterShortcut, &shortcut)?;
+    AppShortcut::activate_shortcuts(&app_handle, vec![AppStoreKey::NextChapterShortcut])?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn set_prev_chapter_shortcut(
+    app_handle: tauri::AppHandle,
+    shortcut: String,
+) -> Result<(), String> {
+    AppShortcut::deactivate_shortcuts(&app_handle, vec![AppStoreKey::PrevChapterShortcut])?;
+    set_to_app_store(&app_handle, AppStoreKey::PrevChapterShortcut, &shortcut)?;
+    AppShortcut::activate_shortcuts(&app_handle, vec![AppStoreKey::PrevChapterShortcut])?;
+    Ok(())
+}
+
+#[tauri::command]
 pub fn set_boss_key_shortcut(app_handle: tauri::AppHandle, shortcut: String) -> Result<(), String> {
     AppShortcut::deactivate_shortcuts(&app_handle, vec![AppStoreKey::BossKeyShortcut])?;
     set_to_app_store(&app_handle, AppStoreKey::BossKeyShortcut, &shortcut)?;
@@ -157,5 +179,7 @@ pub fn set_boss_key_shortcut(app_handle: tauri::AppHandle, shortcut: String) -> 
 #[tauri::command]
 pub fn reset_config(app_handle: tauri::AppHandle) -> Result<(), String> {
     reset_app_store(&app_handle)?;
+
+    AppShortcut::unregister_all_shortcuts(&app_handle)?;
     Ok(())
 }

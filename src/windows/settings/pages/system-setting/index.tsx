@@ -31,6 +31,8 @@ const formSchema = z.object({
   transparent: z.boolean(),
   next_line_shortcut: z.string(),
   prev_line_shortcut: z.string(),
+  next_chapter_shortcut: z.string(),
+  prev_chapter_shortcut: z.string(),
   boss_key_shortcut: z.string(),
 });
 
@@ -78,6 +80,16 @@ const SystemSetting: React.FC = () => {
   useFormWatch(form, 'prev_line_shortcut', (shortcut) => {
     if (loading) return;
     invoke('set_prev_line_shortcut', { shortcut });
+  });
+
+  useFormWatch(form, 'next_chapter_shortcut', (shortcut) => {
+    if (loading) return;
+    invoke('set_next_chapter_shortcut', { shortcut });
+  });
+
+  useFormWatch(form, 'prev_chapter_shortcut', (shortcut) => {
+    if (loading) return;
+    invoke('set_prev_chapter_shortcut', { shortcut });
   });
 
   useFormWatch(form, 'boss_key_shortcut', (shortcut) => {
@@ -198,6 +210,33 @@ const SystemSetting: React.FC = () => {
             </FormItem>
           )}
         />
+        <FormField
+          control={form.control}
+          name="next_chapter_shortcut"
+          render={({ field: { value, onChange, ...rest } }) => (
+            <FormItem>
+              <FormLabel>下一章</FormLabel>
+              <FormControl>
+                <ShortcutRecorder value={value} onChange={onChange} {...rest} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="prev_chapter_shortcut"
+          render={({ field: { value, onChange, ...rest } }) => (
+            <FormItem>
+              <FormLabel>上一章</FormLabel>
+              <FormControl>
+                <ShortcutRecorder value={value} onChange={onChange} {...rest} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <FormField
           control={form.control}
           name="boss_key_shortcut"

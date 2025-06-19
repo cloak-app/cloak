@@ -12,9 +12,22 @@ pub enum AppShortcut {
     NextLine(Shortcut),
     PrevLine(Shortcut),
     BossKey(Shortcut),
+    NextChapter(Shortcut),
+    PrevChapter(Shortcut),
 }
 
 impl AppShortcut {
+    fn new(key: AppStoreKey, shortcut: Shortcut) -> AppShortcut {
+        match key {
+            AppStoreKey::NextLineShortcut => Self::NextLine(shortcut),
+            AppStoreKey::PrevLineShortcut => Self::PrevLine(shortcut),
+            AppStoreKey::BossKeyShortcut => Self::BossKey(shortcut),
+            AppStoreKey::NextChapterShortcut => Self::NextChapter(shortcut),
+            AppStoreKey::PrevChapterShortcut => Self::PrevChapter(shortcut),
+            _ => unreachable!(),
+        }
+    }
+
     pub fn activate_shortcuts(
         app_handle: &AppHandle,
         keys: Vec<AppStoreKey>,
@@ -25,13 +38,7 @@ impl AppShortcut {
                 .transpose()
                 .map_err(|e| e.to_string())?
                 .map(move |shortcut| {
-                    let app_shortcut = match key {
-                        AppStoreKey::NextLineShortcut => Self::NextLine(shortcut),
-                        AppStoreKey::PrevLineShortcut => Self::PrevLine(shortcut),
-                        AppStoreKey::BossKeyShortcut => Self::BossKey(shortcut),
-                        _ => unreachable!(),
-                    };
-
+                    let app_shortcut = Self::new(key, shortcut);
                     Self::register_shortcut(app_handle, app_shortcut).unwrap();
                 });
         }
@@ -48,13 +55,7 @@ impl AppShortcut {
                 .transpose()
                 .map_err(|e| e.to_string())?
                 .map(move |shortcut| {
-                    let app_shortcut = match key {
-                        AppStoreKey::NextLineShortcut => Self::NextLine(shortcut),
-                        AppStoreKey::PrevLineShortcut => Self::PrevLine(shortcut),
-                        AppStoreKey::BossKeyShortcut => Self::BossKey(shortcut),
-                        _ => unreachable!(),
-                    };
-
+                    let app_shortcut = Self::new(key, shortcut);
                     Self::unregister_shortcut(app_handle, app_shortcut).unwrap();
                 });
         }
@@ -82,20 +83,32 @@ impl AppShortcut {
                 if scut == &shortcut && ShortcutState::Pressed == event.state() {
                     match app_shortcut {
                         Self::NextLine(_) => {
-                            tauri::async_runtime::block_on(reader::next_line(
+                            let _ = tauri::async_runtime::block_on(reader::next_line(
                                 app_handle.clone(),
                                 db,
                                 state,
-                            ))
-                            .unwrap();
+                            ));
                         }
                         Self::PrevLine(_) => {
-                            tauri::async_runtime::block_on(reader::prev_line(
+                            let _ = tauri::async_runtime::block_on(reader::prev_line(
                                 app_handle.clone(),
                                 db,
                                 state,
-                            ))
-                            .unwrap();
+                            ));
+                        }
+                        Self::NextChapter(_) => {
+                            let _ = tauri::async_runtime::block_on(reader::next_chapter(
+                                app_handle.clone(),
+                                db,
+                                state,
+                            ));
+                        }
+                        Self::PrevChapter(_) => {
+                            let _ = tauri::async_runtime::block_on(reader::prev_chapter(
+                                app_handle.clone(),
+                                db,
+                                state,
+                            ));
                         }
                         Self::BossKey(_) => {
                             let windows = app_handle.webview_windows();
@@ -105,9 +118,9 @@ impl AppShortcut {
                                 .any(|(_, window)| window.is_visible().unwrap());
 
                             if has_show_window {
-                                hide_all_windows(app_handle).unwrap();
+                                let _ = hide_all_windows(app_handle);
                             } else {
-                                show_all_windows(app_handle).unwrap();
+                                let _ = show_all_windows(app_handle);
                             }
                         }
                     }
@@ -137,6 +150,8 @@ impl AppShortcut {
             Self::NextLine(shortcut) => *shortcut,
             Self::PrevLine(shortcut) => *shortcut,
             Self::BossKey(shortcut) => *shortcut,
+            Self::NextChapter(shortcut) => *shortcut,
+            Self::PrevChapter(shortcut) => *shortcut,
         }
     }
 }

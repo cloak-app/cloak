@@ -9,6 +9,7 @@ export interface Novel {
 export interface Reader {
   novel: Novel;
   chapters: Chapter[];
+  current_chapter: Chapter;
   line_num: number;
 }
 

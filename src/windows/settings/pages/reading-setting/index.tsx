@@ -58,8 +58,6 @@ const ReadingSetting: React.FC = () => {
 
   useFormWatch(form, 'font_family', (fontFamily) => {
     if (loading) return;
-    console.log(fontFamily);
-
     invoke('set_font_family', { fontFamily });
   });
 

@@ -1,16 +1,14 @@
 pub mod model;
 
-use crate::commands::config::{
-    set_boss_key_shortcut, set_next_line_shortcut, set_prev_line_shortcut,
-};
 use crate::store::model::AppStoreKey;
-use crate::utils::shortcut::AppShortcut;
 use tauri::AppHandle;
 use tauri_plugin_store::StoreExt;
 
 const DEFAULT_NEXT_LINE_SHORTCUT: &str = "Control+Alt+ArrowRight";
 const DEFAULT_PREV_LINE_SHORTCUT: &str = "Control+Alt+ArrowLeft";
-const DEFAULT_BOSS_KEY_SHORTCUT: &str = "Control+Alt+ArrowDown";
+const DEFAULT_NEXT_CHAPTER_SHORTCUT: &str = "Control+Alt+ArrowDown";
+const DEFAULT_PREV_CHAPTER_SHORTCUT: &str = "Control+Alt+ArrowUp";
+const DEFAULT_BOSS_KEY_SHORTCUT: &str = "Control+Alt+Enter";
 
 pub fn reset_app_store(app_handle: &AppHandle) -> Result<(), String> {
     let store = app_handle
@@ -25,9 +23,6 @@ pub fn reset_app_store(app_handle: &AppHandle) -> Result<(), String> {
     store.set(AppStoreKey::LetterSpacing.as_str(), 0);
     store.set(AppStoreKey::FontWeight.as_str(), 400);
     store.set(AppStoreKey::FontColor.as_str(), "#000000");
-
-    AppShortcut::unregister_all_shortcuts(app_handle)?;
-
     store.set(
         AppStoreKey::NextLineShortcut.as_str(),
         DEFAULT_NEXT_LINE_SHORTCUT,
@@ -37,13 +32,19 @@ pub fn reset_app_store(app_handle: &AppHandle) -> Result<(), String> {
         DEFAULT_PREV_LINE_SHORTCUT,
     );
     store.set(
+        AppStoreKey::NextChapterShortcut.as_str(),
+        DEFAULT_NEXT_CHAPTER_SHORTCUT,
+    );
+    store.set(
+        AppStoreKey::PrevChapterShortcut.as_str(),
+        DEFAULT_PREV_CHAPTER_SHORTCUT,
+    );
+    store.set(
         AppStoreKey::BossKeyShortcut.as_str(),
         DEFAULT_BOSS_KEY_SHORTCUT,
     );
 
-    set_next_line_shortcut(app_handle.clone(), DEFAULT_NEXT_LINE_SHORTCUT.to_string()).unwrap();
-    set_prev_line_shortcut(app_handle.clone(), DEFAULT_PREV_LINE_SHORTCUT.to_string()).unwrap();
-    set_boss_key_shortcut(app_handle.clone(), DEFAULT_BOSS_KEY_SHORTCUT.to_string()).unwrap();
+    store.save().unwrap();
 
     Ok(())
 }
@@ -88,6 +89,7 @@ pub fn set_to_app_store<T: serde::Serialize>(
 
     let json_value = serde_json::to_value(value).map_err(|e| e.to_string())?;
     store.set(key.as_str(), json_value);
+    store.save().unwrap();
 
     Ok(())
 }

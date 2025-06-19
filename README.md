@@ -7,7 +7,9 @@
 
   A see-through mini reader for slacking off at work.
 
-  <small>based on <a href="https://github.com/tauri-apps/tauri">Tauri 2.x</a></small>
+  based on [Tauri 2.x](https://github.com/tauri-apps/tauri)
+
+  ![repobeats](https://repobeats.axiom.co/api/embed/d02bba2d34b3b88d610c307249c5203800a251eb.svg)
 </div>
 
 ## Install

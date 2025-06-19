@@ -75,8 +75,6 @@ const ShortcutRecorder: React.FC<ShortcutRecorderProps> = (props) => {
   }, [pressedKeys, currentKeys, isEditing, onChange]);
 
   useEventListener('blur', () => {
-    console.log('blur');
-
     setIsEditing(false);
     setCurrentKeys([]);
     setPressedKeys([]);
@@ -84,6 +82,7 @@ const ShortcutRecorder: React.FC<ShortcutRecorderProps> = (props) => {
 
   const handleStart = () => {
     setIsEditing(true);
+    // TODO: 在开始设置快捷键时，应当前置取消所有快捷键的监听，并且提供一个已有快捷键的冲突检测
   };
 
   const renderKeys = isEditing ? currentKeys : value?.split('+');
@@ -92,7 +91,6 @@ const ShortcutRecorder: React.FC<ShortcutRecorderProps> = (props) => {
     <Kbd className="max-w-40" onClick={handleStart}>
       {isEditing && !renderKeys?.length && <KbdKey>按下按键以开始录制</KbdKey>}
       {!isEditing && !renderKeys?.length && <KbdKey>暂未设置快捷键</KbdKey>}
-
       {renderKeys?.map((key, index) => (
         <React.Fragment key={key}>
           <KbdKey>{formatKey(key)}</KbdKey>

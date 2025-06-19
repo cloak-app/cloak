@@ -10,13 +10,16 @@ export default function ReaderWindow() {
   const { data: reader, refresh: refreshReader } = useRequest(() =>
     invoke<Novel>('get_novel_reader'),
   );
-  const { data: line, refresh: refreshLine } = useRequest(() => invoke<string>('get_line'));
+  const { data: line, refresh: refreshLine } = useRequest(() =>
+    invoke<string>('get_line'),
+  );
 
   const { data: config, refresh: refreshConfig } = useRequest(() =>
     invoke<Config>('get_config'),
   );
 
-  const [isFocus, setIsFocus] = useState(false);
+  // 打开后默认聚焦
+  const [isFocus, setIsFocus] = useState(true);
 
   useEffect(() => {
     const listener = listen('reader-line-num-changed', () => {
@@ -65,7 +68,9 @@ export default function ReaderWindow() {
 
   return (
     <div
-      className={clsx('reader-window', { 'is-focus': isFocus })}
+      className={clsx('fixed h-screen w-screen', {
+        'h-full bg-white': isFocus,
+      })}
       style={computedStyle}
     >
       {reader ? line : <p>请从托盘菜单打开一本小说</p>}
