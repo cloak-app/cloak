@@ -145,7 +145,7 @@ pub fn run() {
                 .build()?;
 
             let tray_icon = TrayIconBuilder::new()
-                .icon(Image::from_path("../public/tray-icon.ico").unwrap())
+                .icon(Image::from_path("resources/tray-icon.ico").unwrap())
                 .menu(&menu)
                 .on_menu_event(move |app_handle, event| match event.id.as_ref() {
                     "quit" => {
@@ -166,7 +166,7 @@ pub fn run() {
                         let tray_icon = app_handle.tray_by_id(tray_icon_id.inner()).unwrap();
 
                         if !state.reading_mode {
-                            let icon = Image::from_path("../public/tray-icon.ico").ok();
+                            let icon = Image::from_path("resources/tray-icon.ico").ok();
                             tray_icon.set_icon(icon).unwrap();
                             toggle_reading_mode_i.set_text("打开阅读模式").unwrap();
                             AppShortcut::deactivate_shortcuts(
@@ -180,7 +180,7 @@ pub fn run() {
                             )
                             .unwrap();
                         } else {
-                            let icon = Image::from_path("../public/tray-icon-active.ico").ok();
+                            let icon = Image::from_path("resources/tray-icon-active.ico").ok();
                             tray_icon.set_icon(icon).unwrap();
                             toggle_reading_mode_i.set_text("关闭阅读模式").unwrap();
                             AppShortcut::activate_shortcuts(
