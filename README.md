@@ -20,17 +20,21 @@ Go to the [Release page](https://github.com/Xav1erSue/cloak/releases) to downloa
 
 ### Implemented Features
 
+- [x] Transparent background
 - [x] Import `TXT` novel files.
 - [x] Chapter parsing
 - [x] Chapter search/Chapter jump
 - [x] Automatically save reading progress
+- [x] Custom page size
 - [x] Custom font
 - [x] Custom font size
 - [x] Custom font weight
 - [x] Custom line height
 - [x] Custom character spacing
-- [x] Custom page flip shortcut key
+- [x] Custom page flip hotkey
+- [x] Custom chapter jump hotkey
 - [x] Custom boss key
+- [x] Reading Mode - disable hotkey when not in reading mode
 
 ### Unimplemented Features (In Progress)
 
