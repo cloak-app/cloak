@@ -18,6 +18,7 @@ pub fn reset_app_store(app_handle: &AppHandle) -> Result<(), String> {
     store.set(AppStoreKey::DockVisibility.as_str(), false);
     store.set(AppStoreKey::AlwaysOnTop.as_str(), false);
     store.set(AppStoreKey::Transparent.as_str(), true);
+    store.set(AppStoreKey::LineSize.as_str(), 50);
     store.set(AppStoreKey::FontSize.as_str(), 16);
     store.set(AppStoreKey::LineHeight.as_str(), 1.5);
     store.set(AppStoreKey::LetterSpacing.as_str(), 0);

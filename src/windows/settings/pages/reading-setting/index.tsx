@@ -1,13 +1,17 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { invoke } from '@tauri-apps/api/core';
+import { confirm } from '@tauri-apps/plugin-dialog';
 import { useRequest } from 'ahooks';
+import { HelpCircle } from 'lucide-react';
 import { HexColorPicker } from 'react-colorful';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import FontSelector from './components/font-selector';
+import InputWithButton from './components/input-with-button';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -15,10 +19,16 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useFormWatch } from '@/hooks/use-form-watch';
 import { Config } from '@/types';
 
 const formSchema = z.object({
+  line_size: z.coerce.number(),
   font_size: z.coerce.number(),
   font_family: z.string(),
   line_height: z.coerce.number(),
@@ -34,6 +44,25 @@ const ReadingSetting: React.FC = () => {
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
+  });
+
+  useFormWatch(form, 'line_size', async (lineSize) => {
+    if (loading) return;
+
+    const confirmation = await confirm(
+      '由于每页字数修改，您的阅读位置也会随之发生改变，是否继续？',
+      {
+        title: '温馨提示',
+        kind: 'warning',
+        okLabel: '确定',
+        cancelLabel: '取消',
+      },
+    );
+
+    if (confirmation) {
+      await invoke('set_line_size', { lineSize });
+      await invoke('close_novel_reader');
+    }
   });
 
   useFormWatch(form, 'font_size', (fontSize) => {
@@ -85,6 +114,38 @@ const ReadingSetting: React.FC = () => {
   return (
     <Form {...form}>
       <form className="space-y-4 w-full flex flex-col gap-4 p-4 h-full overflow-y-auto">
+        <FormField
+          control={form.control}
+          name="line_size"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                每页字数
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle size={14} className="text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>会将正在阅读的书本关闭，重新打开后生效</p>
+                  </TooltipContent>
+                </Tooltip>
+              </FormLabel>
+              <FormControl>
+                <InputWithButton {...field} />
+              </FormControl>
+              <FormDescription>
+                每页字数变更后，可能导致上次阅读位置
+                <span className="text-destructive">无法对齐</span>
+                ，需要手动修改
+                <br />
+                如设置过大，可能会导致阅读体验不佳，建议根据放置位置自行调整
+                <br />
+                p.s. 标题行默认不做处理，不排除有部分老六作者写很长的标题
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name="font_size"

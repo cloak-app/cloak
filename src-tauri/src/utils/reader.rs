@@ -34,7 +34,7 @@ impl Serialize for NovelReader {
 }
 
 impl NovelReader {
-    pub fn new(novel: Novel) -> Result<Self, String> {
+    pub fn new(novel: Novel, line_size: usize) -> Result<Self, String> {
         let file = File::open(&novel.path).map_err(|e| e.to_string())?;
         let reader = BufReader::new(file);
         let mut lines = Vec::new();
@@ -43,19 +43,34 @@ impl NovelReader {
         let chapter_re = Regex::new(r"^(第[零一二三四五六七八九十百千万1-9]+章.*)$")
             .map_err(|e| e.to_string())?;
 
-        for (start_line, line) in reader.lines().enumerate() {
+        for (_, line) in reader.lines().enumerate() {
             let line_string = line.map_err(|e| e.to_string())?;
 
-            chapter_re.captures(&line_string).map(|caps| {
+            // 如果是章节，直接添加行
+            let caps = chapter_re.captures(&line_string);
+            if let Some(caps) = caps {
                 let chapter = Chapter {
                     title: caps[1].to_string(),
-                    start_line,
+                    start_line: lines.len() + 1,
                 };
 
                 chapters.push(chapter);
-            });
+                lines.push(line_string);
+            } else {
+                let mut temp_line = String::new();
 
-            lines.push(line_string);
+                for ele in line_string.chars() {
+                    temp_line.push(ele);
+                    if temp_line.chars().count() >= line_size {
+                        lines.push(temp_line);
+                        temp_line = String::new();
+                    }
+                }
+
+                if temp_line.chars().count() > 0 {
+                    lines.push(temp_line);
+                }
+            }
         }
 
         let line_num = novel.last_read_position as usize;

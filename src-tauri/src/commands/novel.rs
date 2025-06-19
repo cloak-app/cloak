@@ -2,7 +2,7 @@ use crate::db::model::Novel;
 use crate::db::Db;
 use crate::state::model::AppState;
 use crate::store::model::AppStoreKey;
-use crate::store::set_to_app_store;
+use crate::store::{get_from_app_store, set_to_app_store};
 use crate::utils::novel::get_novel_by_id;
 use crate::utils::reader::NovelReader;
 use std::fs::{copy, File};
@@ -84,11 +84,12 @@ pub async fn open_novel(
     id: i64,
 ) -> Result<(), String> {
     let novel = get_novel_by_id(&*db, id).await?;
+    let line_size = get_from_app_store::<usize>(&app_handle, AppStoreKey::LineSize)?.unwrap_or(50);
 
     set_to_app_store(&app_handle, AppStoreKey::LastReadNovelId, novel.id)?;
 
     // 创建 reader 并更新状态
-    let reader = NovelReader::new(novel);
+    let reader = NovelReader::new(novel, line_size);
 
     if let Ok(reader) = reader {
         let mut state = state.lock().map_err(|e| e.to_string())?;

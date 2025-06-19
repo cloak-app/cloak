@@ -27,6 +27,8 @@ export interface Config {
   /** 是否透明 */
   transparent?: boolean;
   /* ---------------------------------- 阅读设置 ---------------------------------- */
+  /** 每页字数 */
+  line_size?: number;
   /** 字体大小 */
   font_size?: number;
   /** 字体 */

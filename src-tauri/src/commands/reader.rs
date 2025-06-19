@@ -19,6 +19,19 @@ pub async fn get_novel_reader(
 }
 
 #[tauri::command]
+pub async fn close_novel_reader(
+    app_handle: tauri::AppHandle,
+    state: tauri::State<'_, Mutex<AppState>>,
+) -> Result<(), String> {
+    let mut state = state.lock().map_err(|e| e.to_string())?;
+    state.novel_reader = None;
+
+    app_handle.emit("reader-line-num-changed", 0).unwrap();
+
+    Ok(())
+}
+
+#[tauri::command]
 pub async fn get_line(state: tauri::State<'_, Mutex<AppState>>) -> Result<String, String> {
     let mut state = state.lock().map_err(|e| e.to_string())?;
     let reader = state

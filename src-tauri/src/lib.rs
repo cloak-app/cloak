@@ -55,6 +55,7 @@ pub fn run() {
             novel::open_novel,
             // 阅读相关
             reader::get_novel_reader,
+            reader::close_novel_reader,
             reader::get_line,
             reader::set_line_num,
             // 配置相关
@@ -62,6 +63,7 @@ pub fn run() {
             config::set_dock_visibility,
             config::set_always_on_top,
             config::set_transparent,
+            config::set_line_size,
             config::set_font_size,
             config::get_all_font_families,
             config::set_font_family,
@@ -88,10 +90,13 @@ pub fn run() {
 
                 let last_read_novel_id =
                     get_from_app_store::<i64>(app.handle(), AppStoreKey::LastReadNovelId);
-                if let Ok(Some(id)) = last_read_novel_id {
+
+                let line_size = get_from_app_store::<usize>(app.handle(), AppStoreKey::LineSize);
+
+                if let (Ok(Some(id)), Ok(Some(line_size))) = (last_read_novel_id, line_size) {
                     let novel = get_novel_by_id(&db, id).await.ok();
                     if let Some(novel) = novel {
-                        novel_reader = NovelReader::new(novel).ok();
+                        novel_reader = NovelReader::new(novel, line_size).ok();
                     }
                 }
 
@@ -131,6 +136,7 @@ pub fn run() {
 
             let menu = MenuBuilder::new(app)
                 .item(&toggle_reading_mode_i)
+                .separator()
                 .item(&open_reader_i)
                 .item(&settings_i)
                 .separator()

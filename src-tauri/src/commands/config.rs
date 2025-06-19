@@ -74,6 +74,12 @@ pub fn set_transparent(
 /* ---------------------------------- 阅读设置 ---------------------------------- */
 
 #[tauri::command]
+pub fn set_line_size(app_handle: tauri::AppHandle, line_size: usize) -> Result<(), String> {
+    set_to_app_store(&app_handle, AppStoreKey::LineSize, &line_size)?;
+    Ok(())
+}
+
+#[tauri::command]
 pub fn set_font_size(app_handle: tauri::AppHandle, font_size: i64) -> Result<(), String> {
     set_to_app_store(&app_handle, AppStoreKey::FontSize, &font_size)?;
     app_handle.emit("config-change", 0).unwrap();

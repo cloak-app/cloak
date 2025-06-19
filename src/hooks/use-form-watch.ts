@@ -20,9 +20,7 @@ export const useFormWatch = <
   useEffect(() => {
     const subscription = form.subscribe({
       name,
-      formState: {
-        values: true,
-      },
+      formState: { values: true },
       callback: ({ values }) => {
         if (Array.isArray(name)) {
           const result = name.reduce((acc, key) => {
