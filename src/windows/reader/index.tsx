@@ -2,7 +2,6 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useRequest } from 'ahooks';
-import clsx from 'clsx';
 import { useEffect, useState } from 'react';
 import { Config, Novel } from '@/types';
 
@@ -43,12 +42,10 @@ export default function ReaderWindow() {
 
     const focusListener = win.listen('tauri://focus', () => {
       setIsFocus(true);
-      win.setDecorations(true);
     });
 
     const blurListener = win.listen('tauri://blur', () => {
       setIsFocus(false);
-      win.setDecorations(false);
     });
 
     return () => {
@@ -67,13 +64,34 @@ export default function ReaderWindow() {
   };
 
   return (
-    <div
-      className={clsx('fixed h-screen w-screen', {
-        'h-full bg-white': isFocus,
-      })}
-      style={computedStyle}
-    >
-      {reader ? line : <p>请从托盘菜单打开一本小说</p>}
-    </div>
+    <>
+      <div
+        className="fixed h-screen w-screen p-1 select-none hover:cursor-default"
+        style={computedStyle}
+        data-tauri-drag-region
+      >
+        {reader ? line : <p>请从托盘菜单打开一本小说</p>}
+      </div>
+      {isFocus && (
+        <>
+          <div className="fixed top-0.5 left-0.5">
+            <div className="w-3 h-0.5 bg-primary" />
+            <div className="w-0.5 h-3 bg-primary" />
+          </div>
+          <div className="fixed top-0.5 right-0.5">
+            <div className="w-3 h-0.5 bg-primary ml-auto" />
+            <div className="w-0.5 h-3 bg-primary ml-auto" />
+          </div>
+          <div className="fixed bottom-0.5 left-0.5">
+            <div className="w-0.5 h-3 bg-primary" />
+            <div className="w-3 h-0.5 bg-primary" />
+          </div>
+          <div className="fixed bottom-0.5 right-0.5">
+            <div className="w-0.5 h-3 bg-primary ml-auto" />
+            <div className="w-3 h-0.5 bg-primary ml-auto" />
+          </div>
+        </>
+      )}
+    </>
   );
 }

@@ -11,6 +11,7 @@
     "core:window:allow-set-decorations",
     "core:window:allow-set-background-color",
     "core:event:allow-listen",
-    "core:event:allow-unlisten"
+    "core:event:allow-unlisten",
+    "core:window:allow-start-dragging"
   ]
 }

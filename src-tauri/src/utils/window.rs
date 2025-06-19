@@ -15,11 +15,11 @@ pub fn open_reader_window(app_handle: &AppHandle) -> Result<(), String> {
             get_from_app_store::<bool>(app_handle, AppStoreKey::Transparent)?.unwrap_or(true);
 
         WebviewWindowBuilder::new(app_handle, "reader", WebviewUrl::default())
+            .min_inner_size(200.0, 50.0)
             .shadow(false)
             .transparent(transparent)
+            .decorations(false)
             .always_on_top(always_on_top)
-            .min_inner_size(50.0, 50.0)
-            .inner_size(200.0, 100.0)
             .build()
             .unwrap();
     }
