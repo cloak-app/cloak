@@ -8,7 +8,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { safeDivide } from '@/lib/number';
 import { Chapter, Reader } from '@/types';
 
 const NovelDetail: React.FC = () => {
@@ -16,7 +15,7 @@ const NovelDetail: React.FC = () => {
     invoke<Reader>('get_novel_reader'),
   );
 
-  const { novel, chapters, line_num, current_chapter } = data ?? {};
+  const { novel, chapters, current_chapter, read_progress } = data ?? {};
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -82,8 +81,6 @@ const NovelDetail: React.FC = () => {
     };
   }, [refresh]);
 
-  const progress = safeDivide(line_num, novel?.total_lines) * 100;
-
   if (!data)
     return (
       <div className="w-full h-full text-sm">
@@ -105,9 +102,9 @@ const NovelDetail: React.FC = () => {
       <div className="border-b pb-2 text-lg font-semibold">{novel?.title}</div>
       <div className="text-sm leading-none font-medium">阅读进度</div>
       <div className="flex items-center gap-2">
-        <Progress className="w-3/5" value={progress} />
+        <Progress className="w-3/5" value={read_progress} />
         <span className="text-sm text-muted-foreground">
-          {progress.toFixed(2)}%
+          {read_progress?.toFixed(2)}%
         </span>
       </div>
       <div className="text-sm leading-none font-medium">章节列表</div>

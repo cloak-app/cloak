@@ -5,8 +5,7 @@ use crate::store::model::AppStoreKey;
 use crate::store::{get_from_app_store, set_to_app_store};
 use crate::utils::novel::get_novel_by_id;
 use crate::utils::reader::NovelReader;
-use std::fs::{copy, File};
-use std::io::{BufRead, BufReader};
+use std::fs::copy;
 use std::path::Path;
 use std::sync::Mutex;
 use tauri::{Emitter, Manager};
@@ -31,12 +30,6 @@ pub async fn add_novel(
         return Err("File must have a `.txt` extension".to_string());
     }
 
-    // 获取文件行数
-    let file = File::open(path).map_err(|e| e.to_string())?;
-    let reader = BufReader::new(file);
-
-    let total_lines = reader.lines().count() as i64;
-
     // 将文件复制到应用程序目录
     let app_data_dir = app_handle
         .path()
@@ -48,17 +41,17 @@ pub async fn add_novel(
 
     copy(path, &new_path).map_err(|e| format!("Error copying file: {}", e))?;
 
-    let title = filename.split(".").next().ok_or("Invalid filename")?;
+    let title = filename.split(".").next().expect("Invalid filename");
 
-    let new_path_str = new_path.to_str().ok_or("Invalid file path")?;
+    let new_path_str = new_path.to_str().expect("Invalid file path");
 
     sqlx::query(
-        "INSERT INTO novel (title, path, last_read_position, total_lines) VALUES (?1, ?2, ?3, ?4)",
+        "INSERT INTO novel (title, path, last_read_position, read_progress) VALUES (?1, ?2, ?3, ?4)",
     )
     .bind(title)
     .bind(new_path_str)
     .bind(0)
-    .bind(total_lines)
+    .bind(0)
     .execute(&*db)
     .await
     .map_err(|e| format!("Error executing query: {}", e))?;

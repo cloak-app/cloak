@@ -7,5 +7,5 @@ pub struct Novel {
     pub title: String,
     pub path: String,
     pub last_read_position: i64,
-    pub total_lines: i64,
+    pub read_progress: f64,
 }

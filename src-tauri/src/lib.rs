@@ -4,7 +4,7 @@ mod state;
 mod store;
 mod utils;
 
-use crate::commands::{config, novel, reader};
+use crate::commands::{config, novel, os, reader};
 use crate::db::setup_db;
 use crate::state::model::AppState;
 use crate::store::model::AppStoreKey;
@@ -14,12 +14,14 @@ use crate::utils::reader::NovelReader;
 use crate::utils::shortcut::AppShortcut;
 use crate::utils::update::update;
 use crate::utils::window::{open_reader_window, open_settings_window, show_all_windows};
+use log::LevelFilter;
 use std::sync::Mutex;
 use tauri::image::Image;
 use tauri::menu::*;
-use tauri::tray::{TrayIconBuilder, TrayIconId};
+use tauri::tray::TrayIconBuilder;
 use tauri::{Manager, RunEvent};
 use tauri_plugin_dialog::{DialogExt, MessageDialogButtons, MessageDialogKind};
+use tauri_plugin_log::fern::colors::ColoredLevelConfig;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -31,6 +33,12 @@ pub fn run() {
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(
+            tauri_plugin_log::Builder::new()
+                .with_colors(ColoredLevelConfig::default())
+                .level(LevelFilter::Warn)
+                .build(),
+        )
         .plugin(tauri_plugin_single_instance::init(|app_handle, _, _| {
             let windows = app_handle.webview_windows();
             let has_show_window = windows
@@ -79,10 +87,17 @@ pub fn run() {
             config::set_next_chapter_shortcut,
             config::set_prev_chapter_shortcut,
             config::set_boss_key_shortcut,
+            // 系统相关
+            os::show_in_folder,
         ])
         .setup(|app| {
+            /* -------------------------------- 设置 panic 钩子 -------------------------------- */
+            std::panic::set_hook(Box::new(|info| {
+                log::error!("unhandled panic: {:?}", info);
+            }));
+
             /* -------------------------------- 初始化全局上下文 -------------------------------- */
-            init_app_store(app.handle()).unwrap();
+            init_app_store(app.handle())?;
 
             tauri::async_runtime::block_on(async {
                 let db = setup_db(app).await;
@@ -109,8 +124,7 @@ pub fn run() {
             });
 
             /* --------------------------------- 注册全局快捷键 -------------------------------- */
-            AppShortcut::activate_shortcuts(app.handle(), vec![AppStoreKey::BossKeyShortcut])
-                .unwrap();
+            AppShortcut::activate_shortcuts(app.handle(), vec![AppStoreKey::BossKeyShortcut])?;
 
             /* ---------------------------------- 系统设置 ---------------------------------- */
             #[cfg(target_os = "macos")]
@@ -118,7 +132,6 @@ pub fn run() {
                 let dock_visibility =
                     get_from_app_store::<bool>(app.handle(), AppStoreKey::DockVisibility)?
                         .unwrap_or(false);
-
                 app.set_dock_visibility(dock_visibility);
             }
 
@@ -144,8 +157,16 @@ pub fn run() {
                 .item(&quit_i)
                 .build()?;
 
-            let tray_icon = TrayIconBuilder::new()
-                .icon(Image::from_path("resources/tray-icon.ico").unwrap())
+            let default_tray_icon_path = app
+                .path()
+                .resolve("icons/tray-icon.ico", tauri::path::BaseDirectory::Resource)?;
+            let active_tray_icon_path = app.path().resolve(
+                "icons/tray-icon-active.ico",
+                tauri::path::BaseDirectory::Resource,
+            )?;
+
+            TrayIconBuilder::with_id("tray")
+                .icon(Image::from_path(default_tray_icon_path.clone()).unwrap())
                 .menu(&menu)
                 .on_menu_event(move |app_handle, event| match event.id.as_ref() {
                     "quit" => {
@@ -155,19 +176,19 @@ pub fn run() {
                         open_settings_window(app_handle).unwrap();
                     }
                     "open_reader" => {
-                        open_reader_window(app_handle).unwrap();
+                        open_reader_window(app_handle).expect("Failed to open reader window");
                     }
                     "toggle_reading_mode" => {
                         let state = app_handle.state::<Mutex<AppState>>();
                         let mut state = state.lock().unwrap();
                         state.reading_mode = !state.reading_mode;
-
-                        let tray_icon_id = app_handle.state::<TrayIconId>();
-                        let tray_icon = app_handle.tray_by_id(tray_icon_id.inner()).unwrap();
+                        let tray_icon = app_handle.tray_by_id("tray").unwrap();
 
                         if !state.reading_mode {
-                            let icon = Image::from_path("resources/tray-icon.ico").ok();
-                            tray_icon.set_icon(icon).unwrap();
+                            tray_icon
+                                .set_icon(Image::from_path(default_tray_icon_path.clone()).ok())
+                                .unwrap();
+
                             toggle_reading_mode_i.set_text("打开阅读模式").unwrap();
                             AppShortcut::deactivate_shortcuts(
                                 app_handle,
@@ -180,8 +201,10 @@ pub fn run() {
                             )
                             .unwrap();
                         } else {
-                            let icon = Image::from_path("resources/tray-icon-active.ico").ok();
-                            tray_icon.set_icon(icon).unwrap();
+                            tray_icon
+                                .set_icon(Image::from_path(active_tray_icon_path.clone()).ok())
+                                .unwrap();
+
                             toggle_reading_mode_i.set_text("关闭阅读模式").unwrap();
                             AppShortcut::activate_shortcuts(
                                 app_handle,
@@ -195,13 +218,9 @@ pub fn run() {
                             .unwrap();
                         }
                     }
-                    _ => {
-                        panic!("menu item {:?} not handled", event.id);
-                    }
+                    _ => unreachable!(),
                 })
                 .build(app)?;
-
-            app.manage(tray_icon.id().clone());
 
             /* ---------------------------------- 检查更新 ---------------------------------- */
             let app_handle = app.handle().clone();

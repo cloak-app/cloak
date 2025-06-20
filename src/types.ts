@@ -3,7 +3,7 @@ export interface Novel {
   title: string;
   path: string;
   last_read_position: number;
-  total_lines: number;
+  read_progress: number;
 }
 
 export interface Reader {
@@ -11,6 +11,7 @@ export interface Reader {
   chapters: Chapter[];
   current_chapter: Chapter;
   line_num: number;
+  read_progress: number;
 }
 
 export interface Chapter {

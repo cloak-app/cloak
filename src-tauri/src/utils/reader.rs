@@ -1,8 +1,9 @@
-use crate::db::model::Novel;
 use regex::Regex;
 use serde::{Deserialize, Serialize, Serializer};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
+
+use crate::db::model::Novel;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Chapter {
@@ -24,11 +25,12 @@ impl Serialize for NovelReader {
         S: Serializer,
     {
         use serde::ser::SerializeStruct;
-        let mut state = serializer.serialize_struct("NovelReader", 4)?;
+        let mut state = serializer.serialize_struct("NovelReader", 5)?;
         state.serialize_field("novel", &self.novel)?;
         state.serialize_field("chapters", &self.chapters)?;
         state.serialize_field("line_num", &self.line_num)?;
         state.serialize_field("current_chapter", &self.current_chapter())?;
+        state.serialize_field("read_progress", &self.read_progress())?;
         state.end()
     }
 }
@@ -51,7 +53,7 @@ impl NovelReader {
             if let Some(caps) = caps {
                 let chapter = Chapter {
                     title: caps[1].to_string(),
-                    start_line: lines.len() + 1,
+                    start_line: lines.len(),
                 };
 
                 chapters.push(chapter);
@@ -76,23 +78,27 @@ impl NovelReader {
         let line_num = novel.last_read_position as usize;
 
         Ok(Self {
+            novel,
             chapters,
             line_num,
-            novel,
             lines,
         })
     }
 
     pub fn current_chapter(&self) -> Chapter {
-        let mut current_chapter = None::<Chapter>;
+        let mut current_chapter = self.chapters[0].clone();
 
         for chapter in self.chapters.iter() {
             if chapter.start_line <= self.line_num {
-                current_chapter = Some(chapter.clone());
+                current_chapter = chapter.clone();
             }
         }
 
-        current_chapter.unwrap()
+        current_chapter
+    }
+
+    pub fn read_progress(&self) -> f64 {
+        self.line_num as f64 / self.lines.len() as f64 * 100.0
     }
 
     pub fn get_line(&self) -> Option<&str> {

@@ -7,7 +7,6 @@ import {
 } from '@tanstack/react-table';
 import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
-import { openPath } from '@tauri-apps/plugin-opener';
 import { useRequest } from 'ahooks';
 import { MoreHorizontal, Plus, Trash2 } from 'lucide-react';
 import { defaultColumns } from './columns';
@@ -55,9 +54,7 @@ const NovelList: React.FC = () => {
   };
 
   const handleOpenFileDirectory = (path: string) => {
-    const directoryPath = path.split('/').slice(0, -1).join('/');
-
-    openPath(directoryPath);
+    invoke('show_in_folder', { path });
   };
 
   const columns: ColumnDef<Novel>[] = [

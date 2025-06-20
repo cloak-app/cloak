@@ -6,7 +6,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { safeDivide } from '@/lib/number';
 import { Novel } from '@/types';
 
 export const defaultColumns: ColumnDef<Novel>[] = [
@@ -30,14 +29,11 @@ export const defaultColumns: ColumnDef<Novel>[] = [
     header: '阅读进度',
     cell: ({ row }) => {
       const novel = row.original;
-      const lastReadPosition = novel.last_read_position;
-      const totalCharacters = novel.total_lines;
-      const progress = safeDivide(lastReadPosition, totalCharacters) * 100;
       return (
         <div className="flex items-center gap-2">
-          <Progress className="w-30" value={progress} />
+          <Progress className="w-30" value={novel.read_progress} />
           <span className="text-sm text-muted-foreground">
-            {progress.toFixed(2)}%
+            {novel.read_progress.toFixed(2)}%
           </span>
         </div>
       );
@@ -48,9 +44,7 @@ export const defaultColumns: ColumnDef<Novel>[] = [
     header: '状态',
     cell: ({ row }) => {
       const novel = row.original;
-      const lastReadPosition = novel.last_read_position;
-      const totalCharacters = novel.total_lines;
-      const isFinished = lastReadPosition >= totalCharacters;
+      const isFinished = novel.read_progress >= 100;
 
       return (
         <Badge variant={isFinished ? 'default' : 'outline'}>

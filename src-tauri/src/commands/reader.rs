@@ -10,12 +10,13 @@ pub async fn get_novel_reader(
     state: tauri::State<'_, Mutex<AppState>>,
 ) -> Result<NovelReader, String> {
     let state = state.lock().map_err(|e| e.to_string())?;
-    let reader = state
-        .novel_reader
-        .as_ref()
-        .ok_or("No novel is currently open")?;
+    let reader = &state.novel_reader;
 
-    Ok(reader.clone())
+    if let Some(reader) = reader {
+        Ok(reader.clone())
+    } else {
+        Err("No novel is currently open".to_string())
+    }
 }
 
 #[tauri::command]
@@ -26,22 +27,24 @@ pub async fn close_novel_reader(
     let mut state = state.lock().map_err(|e| e.to_string())?;
     state.novel_reader = None;
 
-    app_handle.emit("reader-line-num-changed", 0).unwrap();
+    app_handle
+        .emit("reader-line-num-changed", 0)
+        .map_err(|e| e.to_string())?;
 
     Ok(())
 }
 
 #[tauri::command]
 pub async fn get_line(state: tauri::State<'_, Mutex<AppState>>) -> Result<String, String> {
-    let mut state = state.lock().map_err(|e| e.to_string())?;
-    let reader = state
-        .novel_reader
-        .as_mut()
-        .ok_or("No novel is currently open")?;
+    let state = state.lock().map_err(|e| e.to_string())?;
+    let reader = &state.novel_reader;
 
-    let line = reader.get_line();
-
-    Ok(line.unwrap_or("").to_string())
+    if let Some(reader) = reader {
+        let line = reader.get_line().unwrap_or("");
+        Ok(line.to_string())
+    } else {
+        Err("No novel is currently open".to_string())
+    }
 }
 
 #[tauri::command]
@@ -51,20 +54,25 @@ pub async fn set_line_num(
     state: tauri::State<'_, Mutex<AppState>>,
     line_num: usize,
 ) -> Result<(), String> {
-    let novel_id = {
+    let (novel_id, last_read_position, read_progress);
+    {
         let mut state = state.lock().map_err(|e| e.to_string())?;
-        let reader = state
-            .novel_reader
-            .as_mut()
-            .ok_or("No novel is currently open")?;
+        let reader = &mut state.novel_reader;
 
-        reader.set_line_num(line_num)?;
-        reader.novel.id
-    };
+        if let Some(reader) = reader {
+            reader.set_line_num(line_num)?;
+            app_handle
+                .emit("reader-line-num-changed", 0)
+                .map_err(|e| e.to_string())?;
+            novel_id = reader.novel.id;
+            last_read_position = reader.line_num as i64;
+            read_progress = reader.read_progress();
+        } else {
+            return Err("No novel is currently open".to_string());
+        }
+    }
 
-    app_handle.emit("reader-line-num-changed", 0).unwrap();
-
-    save_novel(&*db, novel_id, line_num as i64).await?;
+    save_novel(&*db, novel_id, last_read_position, read_progress).await?;
 
     Ok(())
 }
@@ -75,20 +83,25 @@ pub async fn next_line(
     db: tauri::State<'_, Db>,
     state: tauri::State<'_, Mutex<AppState>>,
 ) -> Result<(), String> {
-    let (novel_id, line_num) = {
+    let (novel_id, last_read_position, read_progress);
+    {
         let mut state = state.lock().map_err(|e| e.to_string())?;
-        let reader = state
-            .novel_reader
-            .as_mut()
-            .ok_or("No novel is currently open")?;
+        let reader = &mut state.novel_reader;
 
-        reader.next_line()?;
-        (reader.novel.id, reader.line_num)
-    };
+        if let Some(reader) = reader {
+            reader.next_line()?;
+            app_handle
+                .emit("reader-line-num-changed", 0)
+                .map_err(|e| e.to_string())?;
+            novel_id = reader.novel.id;
+            last_read_position = reader.line_num as i64;
+            read_progress = reader.read_progress();
+        } else {
+            return Err("No novel is currently open".to_string());
+        }
+    }
 
-    app_handle.emit("reader-line-num-changed", 0).unwrap();
-
-    save_novel(&*db, novel_id, line_num as i64).await?;
+    save_novel(&*db, novel_id, last_read_position, read_progress).await?;
 
     Ok(())
 }
@@ -99,20 +112,25 @@ pub async fn prev_line(
     db: tauri::State<'_, Db>,
     state: tauri::State<'_, Mutex<AppState>>,
 ) -> Result<(), String> {
-    let (novel_id, line_num) = {
+    let (novel_id, last_read_position, read_progress);
+    {
         let mut state = state.lock().map_err(|e| e.to_string())?;
-        let reader = state
-            .novel_reader
-            .as_mut()
-            .ok_or("No novel is currently open")?;
+        let reader = &mut state.novel_reader;
 
-        reader.prev_line()?;
-        (reader.novel.id, reader.line_num)
-    };
+        if let Some(reader) = reader {
+            reader.prev_line()?;
+            app_handle
+                .emit("reader-line-num-changed", 0)
+                .map_err(|e| e.to_string())?;
+            novel_id = reader.novel.id;
+            last_read_position = reader.line_num as i64;
+            read_progress = reader.read_progress();
+        } else {
+            return Err("No novel is currently open".to_string());
+        }
+    }
 
-    app_handle.emit("reader-line-num-changed", 0).unwrap();
-
-    save_novel(&*db, novel_id, line_num as i64).await?;
+    save_novel(&*db, novel_id, last_read_position, read_progress).await?;
 
     Ok(())
 }
@@ -123,20 +141,25 @@ pub async fn next_chapter(
     db: tauri::State<'_, Db>,
     state: tauri::State<'_, Mutex<AppState>>,
 ) -> Result<(), String> {
-    let (novel_id, line_num) = {
+    let (novel_id, last_read_position, read_progress);
+    {
         let mut state = state.lock().map_err(|e| e.to_string())?;
-        let reader = state
-            .novel_reader
-            .as_mut()
-            .ok_or("No novel is currently open")?;
+        let reader = &mut state.novel_reader;
 
-        reader.next_chapter()?;
-        (reader.novel.id, reader.line_num)
-    };
+        if let Some(reader) = reader {
+            reader.next_chapter()?;
+            app_handle
+                .emit("reader-line-num-changed", 0)
+                .map_err(|e| e.to_string())?;
+            novel_id = reader.novel.id;
+            last_read_position = reader.line_num as i64;
+            read_progress = reader.read_progress();
+        } else {
+            return Err("No novel is currently open".to_string());
+        }
+    }
 
-    app_handle.emit("reader-line-num-changed", 0).unwrap();
-
-    save_novel(&*db, novel_id, line_num as i64).await?;
+    save_novel(&*db, novel_id, last_read_position, read_progress).await?;
 
     Ok(())
 }
@@ -147,20 +170,25 @@ pub async fn prev_chapter(
     db: tauri::State<'_, Db>,
     state: tauri::State<'_, Mutex<AppState>>,
 ) -> Result<(), String> {
-    let (novel_id, line_num) = {
+    let (novel_id, last_read_position, read_progress);
+    {
         let mut state = state.lock().map_err(|e| e.to_string())?;
-        let reader = state
-            .novel_reader
-            .as_mut()
-            .ok_or("No novel is currently open")?;
+        let reader = &mut state.novel_reader;
 
-        reader.prev_chapter()?;
-        (reader.novel.id, reader.line_num)
-    };
+        if let Some(reader) = reader {
+            reader.prev_chapter()?;
+            app_handle
+                .emit("reader-line-num-changed", 0)
+                .map_err(|e| e.to_string())?;
+            novel_id = reader.novel.id;
+            last_read_position = reader.line_num as i64;
+            read_progress = reader.read_progress();
+        } else {
+            return Err("No novel is currently open".to_string());
+        }
+    }
 
-    app_handle.emit("reader-line-num-changed", 0).unwrap();
-
-    save_novel(&*db, novel_id, line_num as i64).await?;
+    save_novel(&*db, novel_id, last_read_position, read_progress).await?;
 
     Ok(())
 }
