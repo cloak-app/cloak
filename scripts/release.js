@@ -45,11 +45,11 @@ const getDisabledIdentifier = (version, identifier) => {
  */
 const watchFileUpdated = (filePath) => {
   return new Promise((resolve, reject) => {
-    // 10 秒超时
+    // 30 秒超时
     let timer = setTimeout(() => {
       console.error('[ERROR]: `Cargo.lock` updated timeout');
       reject();
-    }, 10 * 1000);
+    }, 30 * 1000);
 
     watchFile(filePath, () => {
       clearTimeout(timer);
