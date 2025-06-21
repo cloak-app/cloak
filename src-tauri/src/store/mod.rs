@@ -94,3 +94,14 @@ pub fn set_to_app_store<T: serde::Serialize>(
 
     Ok(())
 }
+
+pub fn delete_from_app_store(app_handle: &AppHandle, key: AppStoreKey) -> Result<(), String> {
+    let store = app_handle
+        .store("app_data.json")
+        .map_err(|e| e.to_string())?;
+
+    store.delete(key.as_str());
+    store.save().unwrap();
+
+    Ok(())
+}

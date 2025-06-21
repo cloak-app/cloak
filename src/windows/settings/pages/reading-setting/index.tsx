@@ -5,6 +5,7 @@ import { useRequest } from 'ahooks';
 import { HelpCircle } from 'lucide-react';
 import { HexColorPicker } from 'react-colorful';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 import FontSelector from './components/font-selector';
 import InputWithButton from './components/input-with-button';
@@ -50,7 +51,7 @@ const ReadingSetting: React.FC = () => {
     if (loading) return;
 
     const confirmation = await confirm(
-      '由于每页字数修改，您的阅读位置也会随之发生改变，是否继续？',
+      '由于每页字数修改，您在当前章节的阅读进度不会被保留，是否继续',
       {
         title: '温馨提示',
         kind: 'warning',
@@ -60,8 +61,11 @@ const ReadingSetting: React.FC = () => {
     );
 
     if (confirmation) {
-      await invoke('set_line_size', { lineSize });
-      await invoke('close_novel_reader');
+      toast.promise(invoke('set_line_size', { lineSize }), {
+        loading: '正在设置...',
+        success: '设置成功',
+        error: '设置失败',
+      });
     }
   });
 
@@ -126,7 +130,7 @@ const ReadingSetting: React.FC = () => {
                     <HelpCircle size={14} className="text-muted-foreground" />
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>会将正在阅读的书本关闭，重新打开后生效</p>
+                    <p>标题行默认不做处理，不排除有部分老六作者写很长的标题</p>
                   </TooltipContent>
                 </Tooltip>
               </FormLabel>
@@ -134,13 +138,7 @@ const ReadingSetting: React.FC = () => {
                 <InputWithButton {...field} />
               </FormControl>
               <FormDescription>
-                每页字数变更后，可能导致上次阅读位置
-                <span className="text-destructive">无法对齐</span>
-                ，需要手动修改
-                <br />
-                如设置过大，可能会导致阅读体验不佳，建议根据放置位置自行调整
-                <br />
-                p.s. 标题行默认不做处理，不排除有部分老六作者写很长的标题
+                每页字数变更后，会将阅读位置重置到当前章节的开头
               </FormDescription>
               <FormMessage />
             </FormItem>

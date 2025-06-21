@@ -4,14 +4,14 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useRequest } from 'ahooks';
 import { useEffect, useState } from 'react';
 import { WindowTitleBar } from '@/components/titlebar';
-import { Config, Novel } from '@/types';
+import { Config, Reader } from '@/types';
 
 export default function ReaderWindow() {
   const {
     data: reader,
     refresh: refreshReader,
     mutate,
-  } = useRequest(() => invoke<Novel>('get_novel_reader'), {
+  } = useRequest(() => invoke<Reader>('get_novel_reader'), {
     onError: () => mutate(undefined),
   });
 
@@ -29,7 +29,7 @@ export default function ReaderWindow() {
   const [isFocus, setIsFocus] = useState(true);
 
   useEffect(() => {
-    const listener = listen('reader-line-num-changed', () => {
+    const listener = listen('reader-change', () => {
       refreshLine();
       refreshReader();
     });
@@ -73,7 +73,9 @@ export default function ReaderWindow() {
     <div className="fixed h-screen w-screen p-1 select-none hover:cursor-default">
       <WindowTitleBar hidden={!isFocus} />
       <div style={computedStyle}>
-        {reader ? line : <p>请从托盘菜单打开一本小说</p>}
+        {!reader ? <p>请从托盘菜单打开一本小说</p> : null}
+        {reader && line ? line : null}
+        {reader && reader.read_progress === 100 && !line ? '（已读完）' : null}
       </div>
 
       {isFocus && (

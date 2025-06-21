@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import ReaderWindow from './windows/reader';
 import SettingsWindow from './windows/settings';
 import UpdateWindow from './windows/update';
+import { Toaster } from '@/components/ui/sonner';
 
 type Page = 'reader' | 'settings' | 'update';
 
@@ -20,7 +21,12 @@ const App = () => {
     document.body.dataset.window = windowLabel;
   }, [windowLabel]);
 
-  return PAGE[windowLabel];
+  return (
+    <>
+      {PAGE[windowLabel]}
+      <Toaster position="bottom-right" richColors />
+    </>
+  );
 };
 
 export default App;

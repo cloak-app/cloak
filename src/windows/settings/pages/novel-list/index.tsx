@@ -9,6 +9,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
 import { useRequest } from 'ahooks';
 import { MoreHorizontal, Plus, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { defaultColumns } from './columns';
 import { Button } from '@/components/ui/button';
 import {
@@ -34,13 +35,21 @@ const NovelList: React.FC = () => {
   const { data, refresh } = useRequest(() => invoke<Novel[]>('get_novel_list'));
 
   const handleDelete = (id: number) => {
-    invoke('delete_novel', { id });
-    refresh();
+    toast.promise(invoke('delete_novel', { id }), {
+      loading: '删除中...',
+      success: '删除成功！',
+      error: '删除失败！',
+      finally: () => refresh(),
+    });
   };
 
   const handleOpen = (id: number) => {
-    invoke('open_novel', { id });
-    refresh();
+    toast.promise(invoke('open_novel', { id }), {
+      loading: '打开小说中...',
+      success: '打开成功！',
+      error: '打开失败！',
+      finally: () => refresh(),
+    });
   };
 
   const handleAdd = async () => {
@@ -49,8 +58,12 @@ const NovelList: React.FC = () => {
       directory: false,
       filters: [{ name: 'txt', extensions: ['txt'] }],
     });
-    await invoke('add_novel', { path: file });
-    refresh();
+    toast.promise(invoke('add_novel', { path: file }), {
+      loading: '添加小说中...',
+      success: '添加成功！',
+      error: '添加失败！',
+      finally: () => refresh(),
+    });
   };
 
   const handleOpenFileDirectory = (path: string) => {

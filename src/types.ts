@@ -1,20 +1,35 @@
 export interface Novel {
+  /** 小说 ID */
   id: number;
+  /** 小说标题 */
   title: string;
+  /** 小说路径 */
   path: string;
-  last_read_position: number;
+  /** 上次阅读位置 */
+  read_position: number;
+  /** 阅读进度 */
   read_progress: number;
 }
 
 export interface Reader {
-  novel: Novel;
+  /** 小说 ID */
+  novel_id: number;
+  /** 小说标题 */
+  novel_title: string;
+  /** 小说路径 */
+  path: string;
+  /** 章节列表 */
   chapters: Chapter[];
+  /** 当前章节 */
   current_chapter: Chapter;
-  line_num: number;
+  /** 当前行号 */
+  read_position: number;
+  /** 阅读进度 */
   read_progress: number;
 }
 
 export interface Chapter {
+  index: number;
   title: string;
   start_line: number;
 }

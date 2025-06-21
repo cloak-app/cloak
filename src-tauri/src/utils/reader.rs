@@ -3,20 +3,21 @@ use serde::{Deserialize, Serialize, Serializer};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
-use crate::db::model::Novel;
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Chapter {
+    pub index: usize,
     pub title: String,
     pub start_line: usize,
 }
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct NovelReader {
-    pub novel: Novel,
+    pub novel_id: i64,
+    pub novel_title: String,
+    pub novel_path: String,
     pub chapters: Vec<Chapter>,
-    pub line_num: usize,
-    lines: Vec<String>,
+    pub read_position: usize,
+    pub lines: Vec<String>,
 }
 
 impl Serialize for NovelReader {
@@ -25,10 +26,12 @@ impl Serialize for NovelReader {
         S: Serializer,
     {
         use serde::ser::SerializeStruct;
-        let mut state = serializer.serialize_struct("NovelReader", 5)?;
-        state.serialize_field("novel", &self.novel)?;
+        let mut state = serializer.serialize_struct("NovelReader", 7)?;
+        state.serialize_field("novel_id", &self.novel_id)?;
+        state.serialize_field("novel_title", &self.novel_title)?;
+        state.serialize_field("novel_path", &self.novel_path)?;
         state.serialize_field("chapters", &self.chapters)?;
-        state.serialize_field("line_num", &self.line_num)?;
+        state.serialize_field("read_position", &self.read_position)?;
         state.serialize_field("current_chapter", &self.current_chapter())?;
         state.serialize_field("read_progress", &self.read_progress())?;
         state.end()
@@ -36,22 +39,43 @@ impl Serialize for NovelReader {
 }
 
 impl NovelReader {
-    pub fn new(novel: Novel, line_size: usize) -> Result<Self, String> {
-        let file = File::open(&novel.path).map_err(|e| e.to_string())?;
-        let reader = BufReader::new(file);
+    pub fn new(
+        novel_id: i64,
+        novel_title: String,
+        novel_path: String,
+        read_position: usize,
+        line_size: usize,
+    ) -> Result<Self, String> {
+        let (lines, chapters) = Self::read_lines(&novel_path, line_size)?;
+
+        Ok(Self {
+            novel_id,
+            novel_title,
+            novel_path,
+            chapters,
+            read_position,
+            lines,
+        })
+    }
+
+    pub fn read_lines(path: &str, line_size: usize) -> Result<(Vec<String>, Vec<Chapter>), String> {
+        let file = File::open(&path).map_err(|e| e.to_string())?;
+        let buf_reader = BufReader::new(file);
+
         let mut lines = Vec::new();
         let mut chapters = Vec::new();
 
         let chapter_re = Regex::new(r"^(第[零一二三四五六七八九十百千万1-9]+章.*)$")
             .map_err(|e| e.to_string())?;
 
-        for (_, line) in reader.lines().enumerate() {
+        for (_, line) in buf_reader.lines().enumerate() {
             let line_string = line.map_err(|e| e.to_string())?;
 
             // 如果是章节，直接添加行
             let caps = chapter_re.captures(&line_string);
             if let Some(caps) = caps {
                 let chapter = Chapter {
+                    index: chapters.len(),
                     title: caps[1].to_string(),
                     start_line: lines.len(),
                 };
@@ -75,22 +99,15 @@ impl NovelReader {
             }
         }
 
-        let line_num = novel.last_read_position as usize;
-
-        Ok(Self {
-            novel,
-            chapters,
-            line_num,
-            lines,
-        })
+        Ok((lines, chapters))
     }
 
-    pub fn current_chapter(&self) -> Chapter {
-        let mut current_chapter = self.chapters[0].clone();
+    pub fn current_chapter(&self) -> &Chapter {
+        let mut current_chapter = &self.chapters[0];
 
         for chapter in self.chapters.iter() {
-            if chapter.start_line <= self.line_num {
-                current_chapter = chapter.clone();
+            if chapter.start_line <= self.read_position {
+                current_chapter = chapter;
             }
         }
 
@@ -98,45 +115,45 @@ impl NovelReader {
     }
 
     pub fn read_progress(&self) -> f64 {
-        self.line_num as f64 / self.lines.len() as f64 * 100.0
+        self.read_position as f64 / self.lines.len() as f64 * 100.0
     }
 
     pub fn get_line(&self) -> Option<&str> {
-        if self.line_num >= self.lines.len() {
+        if self.read_position >= self.lines.len() {
             return None;
         }
 
-        let line = &self.lines[self.line_num];
+        let line = &self.lines[self.read_position];
 
         Some(line)
     }
 
-    pub fn set_line_num(&mut self, line_num: usize) -> Result<(), String> {
-        if line_num >= self.lines.len() {
+    pub fn set_read_position(&mut self, read_position: usize) -> Result<(), String> {
+        if read_position >= self.lines.len() {
             return Err("Line number out of bounds".to_string());
         }
 
-        self.line_num = line_num;
+        self.read_position = read_position;
 
         Ok(())
     }
 
     pub fn next_line(&mut self) -> Result<(), String> {
-        if self.line_num >= self.lines.len() {
+        if self.read_position >= self.lines.len() {
             return Err("Line number out of bounds".to_string());
         }
 
-        self.line_num += 1;
+        self.read_position += 1;
 
         Ok(())
     }
 
     pub fn prev_line(&mut self) -> Result<(), String> {
-        if self.line_num == 0 {
+        if self.read_position == 0 {
             return Err("Line number out of bounds".to_string());
         }
 
-        self.line_num -= 1;
+        self.read_position -= 1;
 
         Ok(())
     }
@@ -155,7 +172,7 @@ impl NovelReader {
             }
 
             let next_chapter = &self.chapters[next_chapter_index + 1];
-            self.line_num = next_chapter.start_line;
+            self.read_position = next_chapter.start_line;
         }
 
         Ok(())
@@ -175,7 +192,7 @@ impl NovelReader {
             }
 
             let prev_chapter = &self.chapters[prev_chapter_index - 1];
-            self.line_num = prev_chapter.start_line;
+            self.read_position = prev_chapter.start_line;
         }
 
         Ok(())

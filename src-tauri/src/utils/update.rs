@@ -27,7 +27,7 @@ pub async fn update(app_handle: AppHandle) -> tauri_plugin_updater::Result<()> {
 
                         if let Some(content_length) = content_length {
                             let progress = (downloaded as f64 / content_length as f64) * 100.0;
-                            app_handle.emit("update-progress", progress).unwrap();
+                            app_handle.emit("update-progress-change", progress).unwrap();
                         }
                     },
                     || {

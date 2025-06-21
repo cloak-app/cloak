@@ -1,8 +1,13 @@
+use crate::db::Db;
+use crate::state::model::AppState;
 use crate::store::model::AppStoreKey;
 use crate::store::{reset_app_store, set_to_app_store};
+use crate::utils::novel::save_novel;
+use crate::utils::reader::NovelReader;
 use crate::utils::shortcut::AppShortcut;
 use crate::utils::window::{close_reader_window, open_reader_window};
 use serde_json::Value;
+use std::sync::Mutex;
 use tauri::{Emitter, Manager};
 use tauri_plugin_store::StoreExt;
 
@@ -74,8 +79,44 @@ pub fn set_transparent(
 /* ---------------------------------- 阅读设置 ---------------------------------- */
 
 #[tauri::command]
-pub fn set_line_size(app_handle: tauri::AppHandle, line_size: usize) -> Result<(), String> {
+pub async fn set_line_size(
+    app_handle: tauri::AppHandle,
+    db: tauri::State<'_, Db>,
+    state: tauri::State<'_, Mutex<AppState>>,
+    line_size: usize,
+) -> Result<(), String> {
     set_to_app_store(&app_handle, AppStoreKey::LineSize, &line_size)?;
+
+    let (novel_id, read_position, read_progress) = {
+        let mut state = state.lock().map_err(|e| e.to_string())?;
+        let Some(reader) = &mut state.novel_reader else {
+            return Err("No novel reader found".to_string());
+        };
+
+        let current_chapter = reader.current_chapter();
+
+        let (lines, chapters) = NovelReader::read_lines(&reader.novel_path, line_size)?;
+
+        let new_read_position = chapters
+            .iter()
+            .find(|chapter| chapter.index == current_chapter.index)
+            .map(|chapter| chapter.start_line)
+            .expect("No chapter found");
+
+        reader.lines = lines;
+        reader.chapters = chapters;
+        reader.read_position = new_read_position;
+        (
+            reader.novel_id,
+            reader.read_position as i64,
+            reader.read_progress(),
+        )
+    };
+
+    save_novel(&*db, novel_id, read_position, read_progress).await?;
+
+    app_handle.emit("reader-change", 0).unwrap();
+
     Ok(())
 }
 

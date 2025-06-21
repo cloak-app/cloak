@@ -40,6 +40,7 @@
     "cmdk": "^1.1.1",
     "color": "^5.0.0",
     "lucide-react": "^0.511.0",
+    "next-themes": "^0.4.6",
     "radash": "^12.1.0",
     "radix-ui": "^1.4.2",
     "react": "^19.1.0",
@@ -48,6 +49,7 @@
     "react-hook-form": "^7.57.0",
     "react-hotkeys-hook": "^5.1.0",
     "react-router": "^7.6.2",
+    "sonner": "^2.0.5",
     "tailwind-merge": "^3.3.0",
     "tailwindcss": "^4.1.8",
     "zod": "^3.25.49"

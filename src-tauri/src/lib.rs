@@ -62,11 +62,12 @@ pub fn run() {
             novel::add_novel,
             novel::get_novel_list,
             novel::open_novel,
+            novel::delete_novel,
             // 阅读相关
             reader::get_novel_reader,
             reader::close_novel_reader,
             reader::get_line,
-            reader::set_line_num,
+            reader::set_read_position,
             // 配置相关
             config::get_config,
             config::set_dock_visibility,
@@ -112,7 +113,14 @@ pub fn run() {
                 if let (Ok(Some(id)), Ok(Some(line_size))) = (last_read_novel_id, line_size) {
                     let novel = get_novel_by_id(&db, id).await.ok();
                     if let Some(novel) = novel {
-                        novel_reader = NovelReader::new(novel, line_size).ok();
+                        novel_reader = NovelReader::new(
+                            novel.id,
+                            novel.title,
+                            novel.path,
+                            novel.read_position as usize,
+                            line_size,
+                        )
+                        .ok();
                     }
                 }
 

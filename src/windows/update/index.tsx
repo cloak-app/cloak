@@ -11,9 +11,12 @@ const UpdateWindow: React.FC = () => {
       setFinished(true);
     });
 
-    const progressListener = listen<number>('update-progress', (progress) => {
-      setProgress(progress.payload);
-    });
+    const progressListener = listen<number>(
+      'update-progress-change',
+      (progress) => {
+        setProgress(progress.payload);
+      },
+    );
 
     return () => {
       progressListener.then((unListen) => unListen());

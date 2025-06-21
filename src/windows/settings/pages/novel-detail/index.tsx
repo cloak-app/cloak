@@ -15,7 +15,8 @@ const NovelDetail: React.FC = () => {
     invoke<Reader>('get_novel_reader'),
   );
 
-  const { novel, chapters, current_chapter, read_progress } = data ?? {};
+  const { novel_id, novel_title, chapters, current_chapter, read_progress } =
+    data ?? {};
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -26,7 +27,7 @@ const NovelDetail: React.FC = () => {
   const handleClick = async (chapter: Chapter) => {
     if (isCurrentChapter(chapter)) return;
 
-    await invoke('set_line_num', { lineNum: chapter.start_line });
+    await invoke('set_read_position', { readPosition: chapter.start_line });
   };
 
   const observer = useRef<IntersectionObserver | null>(null);
@@ -43,7 +44,7 @@ const NovelDetail: React.FC = () => {
     );
 
     const currentChapterElement = document.getElementById(
-      `${novel?.id}-${current_chapter.start_line}`,
+      `${novel_id}-${current_chapter.start_line}`,
     );
 
     if (!currentChapterElement) return;
@@ -51,13 +52,13 @@ const NovelDetail: React.FC = () => {
     observer.current.observe(currentChapterElement);
 
     return () => observer.current?.disconnect();
-  }, [current_chapter, novel]);
+  }, [current_chapter, novel_id]);
 
   const scrollIntoView = useCallback(() => {
     if (!current_chapter) return;
 
     const currentChapterElement = document.getElementById(
-      `${novel?.id}-${current_chapter.start_line}`,
+      `${novel_id}-${current_chapter.start_line}`,
     );
 
     if (!currentChapterElement) return;
@@ -66,14 +67,14 @@ const NovelDetail: React.FC = () => {
       behavior: 'smooth',
       block: 'center',
     });
-  }, [current_chapter, novel]);
+  }, [current_chapter, novel_id]);
 
   useEffect(() => {
     setTimeout(() => scrollIntoView());
   }, [scrollIntoView]);
 
   useEffect(() => {
-    const listener = listen('reader-line-num-changed', () => {
+    const listener = listen('reader-change', () => {
       refresh();
     });
     return () => {
@@ -99,7 +100,7 @@ const NovelDetail: React.FC = () => {
 
   return (
     <div className="w-full flex flex-col gap-4 p-4 h-full">
-      <div className="border-b pb-2 text-lg font-semibold">{novel?.title}</div>
+      <div className="border-b pb-2 text-lg font-semibold">{novel_title}</div>
       <div className="text-sm leading-none font-medium">阅读进度</div>
       <div className="flex items-center gap-2">
         <Progress className="w-3/5" value={read_progress} />
@@ -112,8 +113,8 @@ const NovelDetail: React.FC = () => {
         <div className="flex flex-col p-2 gap-2">
           {chapters?.map((chapter) => (
             <div
-              key={`${novel?.id}-${chapter.start_line}`}
-              id={`${novel?.id}-${chapter.start_line}`}
+              key={`${novel_id}-${chapter.start_line}`}
+              id={`${novel_id}-${chapter.start_line}`}
               className="rounded-md border p-2 flex justify-between items-center hover:bg-muted-foreground/10 cursor-pointer"
               onClick={() => handleClick(chapter)}
             >
