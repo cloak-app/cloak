@@ -76,7 +76,6 @@ pub fn run() {
             config::set_transparent,
             config::set_line_size,
             config::set_font_size,
-            config::get_all_font_families,
             config::set_font_family,
             config::set_line_height,
             config::set_font_weight,
@@ -89,8 +88,11 @@ pub fn run() {
             config::set_next_chapter_shortcut,
             config::set_prev_chapter_shortcut,
             config::set_boss_key_shortcut,
+            config::activate_all_shortcuts,
+            config::unregister_all_shortcuts,
             // 系统相关
             os::show_in_folder,
+            os::get_all_font_families,
             // 窗口相关
             window::open_reader_window,
         ])
@@ -134,7 +136,7 @@ pub fn run() {
             });
 
             /* --------------------------------- 注册全局快捷键 -------------------------------- */
-            AppShortcut::activate_shortcuts(app.handle(), vec![AppStoreKey::BossKeyShortcut])?;
+            AppShortcut::activate_shortcuts(app.handle(), AppShortcut::get_common_shortcuts())?;
 
             /* ---------------------------------- 系统设置 ---------------------------------- */
             #[cfg(target_os = "macos")]
@@ -202,12 +204,7 @@ pub fn run() {
                             toggle_reading_mode_i.set_text("打开阅读模式").unwrap();
                             AppShortcut::deactivate_shortcuts(
                                 app_handle,
-                                vec![
-                                    AppStoreKey::NextLineShortcut,
-                                    AppStoreKey::PrevLineShortcut,
-                                    AppStoreKey::NextChapterShortcut,
-                                    AppStoreKey::PrevChapterShortcut,
-                                ],
+                                AppShortcut::get_reading_mode_shortcuts(),
                             )
                             .unwrap();
                         } else {
@@ -218,12 +215,7 @@ pub fn run() {
                             toggle_reading_mode_i.set_text("关闭阅读模式").unwrap();
                             AppShortcut::activate_shortcuts(
                                 app_handle,
-                                vec![
-                                    AppStoreKey::NextLineShortcut,
-                                    AppStoreKey::PrevLineShortcut,
-                                    AppStoreKey::NextChapterShortcut,
-                                    AppStoreKey::PrevChapterShortcut,
-                                ],
+                                AppShortcut::get_reading_mode_shortcuts(),
                             )
                             .unwrap();
                         }

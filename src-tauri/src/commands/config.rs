@@ -117,13 +117,6 @@ pub fn set_font_size(app_handle: tauri::AppHandle, font_size: i64) -> Result<(),
 }
 
 #[tauri::command]
-pub fn get_all_font_families() -> Result<Vec<String>, String> {
-    let source = font_kit::source::SystemSource::new();
-    let font_list = source.all_families().map_err(|e| e.to_string())?;
-    Ok(font_list)
-}
-
-#[tauri::command]
 pub fn set_font_family(app_handle: tauri::AppHandle, font_family: String) -> Result<(), String> {
     set_to_app_store(&app_handle, AppStoreKey::FontFamily, &font_family)?;
     app_handle.emit("config-change", 0).unwrap();
@@ -138,7 +131,7 @@ pub fn set_line_height(app_handle: tauri::AppHandle, line_height: f64) -> Result
 }
 
 #[tauri::command]
-pub fn set_letter_spacing(app_handle: tauri::AppHandle, letter_spacing: i64) -> Result<(), String> {
+pub fn set_letter_spacing(app_handle: tauri::AppHandle, letter_spacing: f64) -> Result<(), String> {
     set_to_app_store(&app_handle, AppStoreKey::LetterSpacing, &letter_spacing)?;
     app_handle.emit("config-change", 0).unwrap();
     Ok(())
@@ -165,9 +158,7 @@ pub fn set_next_line_shortcut(
     app_handle: tauri::AppHandle,
     shortcut: String,
 ) -> Result<(), String> {
-    AppShortcut::deactivate_shortcuts(&app_handle, vec![AppStoreKey::NextLineShortcut])?;
     set_to_app_store(&app_handle, AppStoreKey::NextLineShortcut, &shortcut)?;
-    AppShortcut::activate_shortcuts(&app_handle, vec![AppStoreKey::NextLineShortcut])?;
     Ok(())
 }
 
@@ -176,9 +167,7 @@ pub fn set_prev_line_shortcut(
     app_handle: tauri::AppHandle,
     shortcut: String,
 ) -> Result<(), String> {
-    AppShortcut::deactivate_shortcuts(&app_handle, vec![AppStoreKey::PrevLineShortcut])?;
     set_to_app_store(&app_handle, AppStoreKey::PrevLineShortcut, &shortcut)?;
-    AppShortcut::activate_shortcuts(&app_handle, vec![AppStoreKey::PrevLineShortcut])?;
     Ok(())
 }
 
@@ -187,9 +176,7 @@ pub fn set_next_chapter_shortcut(
     app_handle: tauri::AppHandle,
     shortcut: String,
 ) -> Result<(), String> {
-    AppShortcut::deactivate_shortcuts(&app_handle, vec![AppStoreKey::NextChapterShortcut])?;
     set_to_app_store(&app_handle, AppStoreKey::NextChapterShortcut, &shortcut)?;
-    AppShortcut::activate_shortcuts(&app_handle, vec![AppStoreKey::NextChapterShortcut])?;
     Ok(())
 }
 
@@ -198,24 +185,62 @@ pub fn set_prev_chapter_shortcut(
     app_handle: tauri::AppHandle,
     shortcut: String,
 ) -> Result<(), String> {
-    AppShortcut::deactivate_shortcuts(&app_handle, vec![AppStoreKey::PrevChapterShortcut])?;
     set_to_app_store(&app_handle, AppStoreKey::PrevChapterShortcut, &shortcut)?;
-    AppShortcut::activate_shortcuts(&app_handle, vec![AppStoreKey::PrevChapterShortcut])?;
     Ok(())
 }
 
 #[tauri::command]
 pub fn set_boss_key_shortcut(app_handle: tauri::AppHandle, shortcut: String) -> Result<(), String> {
-    AppShortcut::deactivate_shortcuts(&app_handle, vec![AppStoreKey::BossKeyShortcut])?;
     set_to_app_store(&app_handle, AppStoreKey::BossKeyShortcut, &shortcut)?;
-    AppShortcut::activate_shortcuts(&app_handle, vec![AppStoreKey::BossKeyShortcut])?;
     Ok(())
 }
 
 #[tauri::command]
-pub fn reset_config(app_handle: tauri::AppHandle) -> Result<(), String> {
+pub fn unregister_all_shortcuts(app_handle: tauri::AppHandle) -> Result<(), String> {
+    AppShortcut::unregister_all_shortcuts(&app_handle)?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn activate_all_shortcuts(
+    app_handle: tauri::AppHandle,
+    state: tauri::State<'_, Mutex<AppState>>,
+) -> Result<(), String> {
+    let state = state.lock().map_err(|e| e.to_string())?;
+    let reading_mode = state.reading_mode;
+
+    let shortcuts = if reading_mode {
+        AppShortcut::get_all_shortcuts()
+    } else {
+        AppShortcut::get_common_shortcuts()
+    };
+
+    AppShortcut::activate_shortcuts(&app_handle, shortcuts)?;
+
+    Ok(())
+}
+
+/* ----------------------------------- 其他 ----------------------------------- */
+#[tauri::command]
+pub fn reset_config(
+    app_handle: tauri::AppHandle,
+    state: tauri::State<'_, Mutex<AppState>>,
+) -> Result<(), String> {
     reset_app_store(&app_handle)?;
 
     AppShortcut::unregister_all_shortcuts(&app_handle)?;
+
+    let state = state.lock().map_err(|e| e.to_string())?;
+    let reading_mode = state.reading_mode;
+
+    let shortcuts = if reading_mode {
+        AppShortcut::get_all_shortcuts()
+    } else {
+        AppShortcut::get_common_shortcuts()
+    };
+
+    AppShortcut::activate_shortcuts(&app_handle, shortcuts)?;
+
+    app_handle.emit("config-change", 0).unwrap();
     Ok(())
 }

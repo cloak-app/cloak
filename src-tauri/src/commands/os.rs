@@ -46,3 +46,10 @@ pub async fn show_in_folder(path: String) {
         Command::new("open").args(["-R", &path]).spawn().unwrap();
     }
 }
+
+#[tauri::command]
+pub fn get_all_font_families() -> Result<Vec<String>, String> {
+    let source = font_kit::source::SystemSource::new();
+    let font_list = source.all_families().map_err(|e| e.to_string())?;
+    Ok(font_list)
+}

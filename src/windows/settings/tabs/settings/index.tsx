@@ -4,7 +4,6 @@ import { confirm } from '@tauri-apps/plugin-dialog';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { useRequest } from 'ahooks';
 import { BookOpen, Eye, HelpCircle, Keyboard, Trash2 } from 'lucide-react';
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -57,7 +56,7 @@ const formSchema = z.object({
 });
 
 const Settings: React.FC = () => {
-  const { loading } = useRequest(() => invoke<Config>('get_config'), {
+  const { loading, refresh } = useRequest(() => invoke<Config>('get_config'), {
     onSuccess: (data) => form.reset(data),
   });
 
@@ -174,7 +173,8 @@ const Settings: React.FC = () => {
     );
 
     if (confirmation) {
-      // await invoke('reset_config');
+      await invoke('reset_config');
+      refresh();
       toast.success('重置成功', {
         closeButton: true,
         description: '部分设置将于重启后生效',
@@ -187,29 +187,30 @@ const Settings: React.FC = () => {
     }
   };
 
-  const [computedStyle, setComputedStyle] = useState<React.CSSProperties>();
+  const [
+    fontSize,
+    fontFamily,
+    lineHeight,
+    fontWeight,
+    fontColor,
+    letterSpacing,
+  ] = form.watch([
+    'font_size',
+    'font_family',
+    'line_height',
+    'font_weight',
+    'font_color',
+    'letter_spacing',
+  ]);
 
-  useFormWatch(
-    form,
-    [
-      'font_size',
-      'font_family',
-      'line_height',
-      'font_weight',
-      'font_color',
-      'letter_spacing',
-    ],
-    (values) => {
-      setComputedStyle({
-        fontSize: `${values.font_size}px`,
-        fontFamily: values.font_family,
-        lineHeight: values.line_height,
-        fontWeight: values.font_weight,
-        color: values.font_color,
-        letterSpacing: `${values.letter_spacing}px`,
-      });
-    },
-  );
+  const computedStyle = {
+    fontSize: `${fontSize}px`,
+    fontFamily,
+    lineHeight,
+    fontWeight,
+    color: fontColor,
+    letterSpacing: `${letterSpacing}px`,
+  };
 
   return (
     <Form {...form}>
@@ -509,7 +510,21 @@ const Settings: React.FC = () => {
               name="font_family"
               render={({ field }) => (
                 <div className="space-y-2">
-                  <FormLabel>字体</FormLabel>
+                  <FormLabel>
+                    字体
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle
+                          size={14}
+                          className="text-muted-foreground"
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        部分中文繁体字体可能无法识别名称，如苹方字体仅识别简体
+                        `PingFang SC`，不识别 `PingFang HK`
+                      </TooltipContent>
+                    </Tooltip>
+                  </FormLabel>
                   <FormControl>
                     <FontSelector {...field} />
                   </FormControl>

@@ -1,3 +1,4 @@
+import { invoke } from '@tauri-apps/api/core';
 import { useControllableValue, useEventListener } from 'ahooks';
 import React, { useEffect, useState } from 'react';
 import { formatKey, isModifierKey, normalizeKey } from './helper';
@@ -55,18 +56,22 @@ const ShortcutRecorder: React.FC<ShortcutRecorderProps> = (props) => {
       onChange(currentKeys.join('+'));
       setCurrentKeys([]);
       setPressedKeys([]);
+      invoke('activate_all_shortcuts');
     }
   }, [pressedKeys, currentKeys, isEditing, onChange]);
 
   useEventListener('blur', () => {
-    setIsEditing(false);
-    setCurrentKeys([]);
-    setPressedKeys([]);
+    if (isEditing) {
+      setIsEditing(false);
+      setCurrentKeys([]);
+      setPressedKeys([]);
+      invoke('activate_all_shortcuts');
+    }
   });
 
-  const handleStart = () => {
+  const handleStart = async () => {
+    invoke('unregister_all_shortcuts');
     setIsEditing(true);
-    // TODO: 在开始设置快捷键时，应当前置取消所有快捷键的监听，并且提供一个已有快捷键的冲突检测
   };
 
   const renderKeys = isEditing ? currentKeys : value?.split('+');

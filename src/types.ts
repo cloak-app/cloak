@@ -41,31 +41,35 @@ export interface Chapter {
 export interface Config {
   /* ---------------------------------- 系统设置 ---------------------------------- */
   /** 是否显示 Dock 图标 */
-  dock_visibility?: boolean;
+  dock_visibility: boolean;
   /** 是否总在最前 */
-  always_on_top?: boolean;
+  always_on_top: boolean;
   /** 是否透明 */
-  transparent?: boolean;
+  transparent: boolean;
   /* ---------------------------------- 阅读设置 ---------------------------------- */
   /** 每页字数 */
-  line_size?: number;
+  line_size: number;
   /** 字体大小 */
-  font_size?: number;
+  font_size: number;
   /** 字体 */
-  font_family?: string;
+  font_family: string;
   /** 行高 */
-  line_height?: number;
+  line_height: number;
   /** 字体粗细 */
-  font_weight?: string;
+  font_weight: string;
   /** 字体颜色 */
-  font_color?: string;
+  font_color: string;
   /** 字间距 */
-  letter_spacing?: number;
+  letter_spacing: number;
   /* ---------------------------------- 快捷键设置 --------------------------------- */
   /** 下一行快捷键 */
-  next_line_shortcut?: string;
+  next_line_shortcut: string;
   /** 上一行快捷键 */
-  prev_line_shortcut?: string;
+  prev_line_shortcut: string;
+  /** 下一章节快捷键 */
+  next_chapter_shortcut: string;
+  /** 上一章节快捷键 */
+  prev_chapter_shortcut: string;
   /** 老板键快捷键 */
-  boss_key_shortcut?: string;
+  boss_key_shortcut: string;
 }

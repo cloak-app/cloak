@@ -154,4 +154,27 @@ impl AppShortcut {
             Self::PrevChapter(shortcut) => *shortcut,
         }
     }
+
+    pub fn get_common_shortcuts() -> Vec<AppStoreKey> {
+        vec![AppStoreKey::BossKeyShortcut]
+    }
+
+    pub fn get_reading_mode_shortcuts() -> Vec<AppStoreKey> {
+        vec![
+            AppStoreKey::NextLineShortcut,
+            AppStoreKey::PrevLineShortcut,
+            AppStoreKey::NextChapterShortcut,
+            AppStoreKey::PrevChapterShortcut,
+        ]
+    }
+
+    pub fn get_all_shortcuts() -> Vec<AppStoreKey> {
+        vec![
+            AppStoreKey::NextLineShortcut,
+            AppStoreKey::PrevLineShortcut,
+            AppStoreKey::NextChapterShortcut,
+            AppStoreKey::PrevChapterShortcut,
+            AppStoreKey::BossKeyShortcut,
+        ]
+    }
 }
