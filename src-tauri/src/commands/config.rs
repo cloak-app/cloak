@@ -5,7 +5,6 @@ use crate::store::{reset_app_store, set_to_app_store};
 use crate::utils::novel::save_novel;
 use crate::utils::reader::NovelReader;
 use crate::utils::shortcut::AppShortcut;
-use crate::utils::window::{close_reader_window, open_reader_window};
 use serde_json::Value;
 use std::sync::Mutex;
 use tauri::{Emitter, Manager};
@@ -61,18 +60,8 @@ pub fn set_always_on_top(app_handle: tauri::AppHandle, always_on_top: bool) -> R
 }
 
 #[tauri::command]
-pub fn set_transparent(
-    app_handle: tauri::AppHandle,
-    transparent: bool,
-    force_reopen: bool,
-) -> Result<(), String> {
+pub fn set_transparent(app_handle: tauri::AppHandle, transparent: bool) -> Result<(), String> {
     set_to_app_store(&app_handle, AppStoreKey::Transparent, &transparent)?;
-
-    if force_reopen {
-        close_reader_window(&app_handle).unwrap();
-        open_reader_window(&app_handle).unwrap();
-    }
-
     Ok(())
 }
 

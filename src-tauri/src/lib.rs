@@ -4,7 +4,7 @@ mod state;
 mod store;
 mod utils;
 
-use crate::commands::{config, novel, os, reader};
+use crate::commands::{config, novel, os, reader, window};
 use crate::db::setup_db;
 use crate::state::model::AppState;
 use crate::store::model::AppStoreKey;
@@ -63,6 +63,7 @@ pub fn run() {
             novel::get_novel_list,
             novel::open_novel,
             novel::delete_novel,
+            novel::get_novel_detail,
             // 阅读相关
             reader::get_novel_reader,
             reader::close_novel_reader,
@@ -90,6 +91,8 @@ pub fn run() {
             config::set_boss_key_shortcut,
             // 系统相关
             os::show_in_folder,
+            // 窗口相关
+            window::open_reader_window,
         ])
         .setup(|app| {
             /* -------------------------------- 设置 panic 钩子 -------------------------------- */
@@ -115,7 +118,6 @@ pub fn run() {
                     if let Some(novel) = novel {
                         novel_reader = NovelReader::new(
                             novel.id,
-                            novel.title,
                             novel.path,
                             novel.read_position as usize,
                             line_size,

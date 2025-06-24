@@ -1,16 +1,19 @@
 {
   "identifier": "desktop-capability",
-  "platforms": [
-    "macOS",
-    "windows",
-    "linux"
-  ],
-  "windows": [
-    "main"
-  ],
+  "platforms": ["macOS", "windows", "linux"],
+  "windows": ["reader", "settings", "update"],
   "permissions": [
+    "core:default",
+    "opener:default",
+    "store:default",
     "global-shortcut:default",
-    "global-shortcut:default",
-    "updater:default"
+    "updater:default",
+    "dialog:default",
+    "core:event:allow-listen",
+    "core:event:allow-unlisten",
+    "core:window:allow-start-dragging",
+    "core:window:allow-close",
+    "core:window:allow-minimize",
+    "core:window:allow-toggle-maximize"
   ]
 }

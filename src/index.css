@@ -114,7 +114,4 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body:not([data-window="reader"]) {
-    @apply bg-background text-foreground;
-  }
 }

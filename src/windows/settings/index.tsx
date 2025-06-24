@@ -1,40 +1,45 @@
-import { RouterProvider, createBrowserRouter } from 'react-router';
-import Layout from './pages/layout';
-import NovelDetail from './pages/novel-detail';
-import NovelList from './pages/novel-list';
-import ReadingSetting from './pages/reading-setting';
-import SystemSetting from './pages/system-setting';
-
-const router = createBrowserRouter([
-  {
-    path: '/',
-    element: <Layout />,
-    handle: { crumb: () => '设置' },
-    children: [
-      {
-        index: true,
-        element: <NovelDetail />,
-        handle: { crumb: () => '当前小说' },
-      },
-      {
-        path: '/novel-list',
-        element: <NovelList />,
-        handle: { crumb: () => '小说列表' },
-      },
-      {
-        path: '/system-setting',
-        element: <SystemSetting />,
-        handle: { crumb: () => '系统设置' },
-      },
-      {
-        path: '/reading-setting',
-        element: <ReadingSetting />,
-        handle: { crumb: () => '阅读设置' },
-      },
-    ],
-  },
-]);
+import { BookOpen, Heart, Settings } from 'lucide-react';
+import { Current, Library, Settings as SettingsTab } from './tabs';
+import { WindowTitleBar } from '@/components/titlebar';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function SettingsWindow() {
-  return <RouterProvider router={router} />;
+  return (
+    <div className="w-screen h-screen bg-background rounded-lg border flex flex-col overflow-hidden">
+      <WindowTitleBar
+        className="w-full active:shadow-sm"
+        data-tauri-drag-region
+      />
+
+      <Tabs defaultValue="current" className="p-6 flex-1 flex space-y-6">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="current" className="flex items-center gap-2">
+            <BookOpen className="h-4 w-4" />
+            当前阅读
+          </TabsTrigger>
+          <TabsTrigger value="library" className="flex items-center gap-2">
+            <Heart className="h-4 w-4" />
+            小说列表
+          </TabsTrigger>
+          <TabsTrigger value="settings" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            阅读设置
+          </TabsTrigger>
+        </TabsList>
+
+        <ScrollArea className="flex-1 h-0">
+          <TabsContent value="current" className="space-y-6">
+            <Current />
+          </TabsContent>
+          <TabsContent value="library" className="space-y-6">
+            <Library />
+          </TabsContent>
+          <TabsContent value="settings" className="space-y-6">
+            <SettingsTab />
+          </TabsContent>
+        </ScrollArea>
+      </Tabs>
+    </div>
+  );
 }

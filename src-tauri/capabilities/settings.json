@@ -3,13 +3,5 @@
   "identifier": "settings",
   "description": "Capability for the settings window",
   "windows": ["settings"],
-  "permissions": [
-    "core:default",
-    "opener:default",
-    "opener:allow-open-path",
-    "dialog:default",
-    "store:default",
-    "process:default",
-    "process:allow-restart"
-  ]
+  "permissions": ["process:allow-restart"]
 }

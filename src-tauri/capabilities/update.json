@@ -3,11 +3,5 @@
   "identifier": "update",
   "description": "Capability for the update window",
   "windows": ["update"],
-  "permissions": [
-    "core:default",
-    "opener:default",
-    "dialog:default",
-    "core:event:allow-listen",
-    "core:event:allow-unlisten"
-  ]
+  "permissions": []
 }

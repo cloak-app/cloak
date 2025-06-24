@@ -24,7 +24,7 @@ const App = () => {
   return (
     <>
       {PAGE[windowLabel]}
-      <Toaster position="bottom-right" richColors />
+      <Toaster position="bottom-right" />
     </>
   );
 };

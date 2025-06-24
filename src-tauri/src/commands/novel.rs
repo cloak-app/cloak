@@ -42,16 +42,20 @@ pub async fn add_novel(
     copy(path, &new_path).map_err(|e| format!("Error copying file: {}", e))?;
 
     let title = filename.split(".").next().expect("Invalid filename");
-
     let new_path_str = new_path.to_str().expect("Invalid file path");
+    let file_size = filepath
+        .metadata()
+        .map(|metadata| metadata.len())
+        .map_err(|e| format!("Error getting file metadata: {}", e))?;
 
     sqlx::query(
-        "INSERT INTO novel (title, path, read_position, read_progress) VALUES (?1, ?2, ?3, ?4)",
+        "INSERT INTO novel (title, path, read_position, read_progress, file_size) VALUES (?1, ?2, ?3, ?4, ?5)",
     )
     .bind(title)
     .bind(new_path_str)
     .bind(0)
     .bind(0)
+    .bind(file_size as i64)
     .execute(&*db)
     .await
     .map_err(|e| format!("Error executing query: {}", e))?;
@@ -70,6 +74,13 @@ pub async fn get_novel_list(db: tauri::State<'_, Db>) -> Result<Vec<Novel>, Stri
 }
 
 #[tauri::command]
+pub async fn get_novel_detail(db: tauri::State<'_, Db>, id: i64) -> Result<Novel, String> {
+    let novel = get_novel_by_id(&*db, id).await?;
+
+    Ok(novel)
+}
+
+#[tauri::command]
 pub async fn open_novel(
     app_handle: tauri::AppHandle,
     db: tauri::State<'_, Db>,
@@ -84,7 +95,6 @@ pub async fn open_novel(
     // 创建 reader 并更新状态
     let reader = NovelReader::new(
         novel.id,
-        novel.title,
         novel.path,
         novel.read_position as usize,
         line_size,

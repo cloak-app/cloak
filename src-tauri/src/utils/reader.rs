@@ -13,7 +13,6 @@ pub struct Chapter {
 #[derive(Debug, Deserialize, Clone)]
 pub struct NovelReader {
     pub novel_id: i64,
-    pub novel_title: String,
     pub novel_path: String,
     pub chapters: Vec<Chapter>,
     pub read_position: usize,
@@ -26,9 +25,8 @@ impl Serialize for NovelReader {
         S: Serializer,
     {
         use serde::ser::SerializeStruct;
-        let mut state = serializer.serialize_struct("NovelReader", 7)?;
+        let mut state = serializer.serialize_struct("NovelReader", 6)?;
         state.serialize_field("novel_id", &self.novel_id)?;
-        state.serialize_field("novel_title", &self.novel_title)?;
         state.serialize_field("novel_path", &self.novel_path)?;
         state.serialize_field("chapters", &self.chapters)?;
         state.serialize_field("read_position", &self.read_position)?;
@@ -41,7 +39,6 @@ impl Serialize for NovelReader {
 impl NovelReader {
     pub fn new(
         novel_id: i64,
-        novel_title: String,
         novel_path: String,
         read_position: usize,
         line_size: usize,
@@ -50,7 +47,6 @@ impl NovelReader {
 
         Ok(Self {
             novel_id,
-            novel_title,
             novel_path,
             chapters,
             read_position,

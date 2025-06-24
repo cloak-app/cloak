@@ -4,7 +4,24 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useRequest } from 'ahooks';
 import { useEffect, useState } from 'react';
 import { WindowTitleBar } from '@/components/titlebar';
+import { cn } from '@/lib/utils';
 import { Config, Reader } from '@/types';
+
+const Icon = ({ className, ...rest }: any) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth="1.5"
+      stroke="currentColor"
+      className={className}
+      {...rest}
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m6-6H6" />
+    </svg>
+  );
+};
 
 export default function ReaderWindow() {
   const {
@@ -61,43 +78,40 @@ export default function ReaderWindow() {
   }, [win]);
 
   const computedStyle: React.CSSProperties = {
-    fontSize: config?.font_size,
+    fontSize: `${config?.font_size}px`,
     fontFamily: config?.font_family,
     lineHeight: config?.line_height,
     fontWeight: config?.font_weight,
     color: config?.font_color,
-    letterSpacing: config?.letter_spacing,
+    letterSpacing: `${config?.letter_spacing}px`,
   };
 
   return (
-    <div className="fixed h-screen w-screen p-1 select-none hover:cursor-default">
-      <WindowTitleBar hidden={!isFocus} />
-      <div style={computedStyle}>
+    <div
+      className={cn(
+        'fixed top-3 bottom-3 left-3 right-3 select-none border border-transparent hover:cursor-default',
+        isFocus && 'border-black/[0.2] dark:border-white/[0.2] bg-white',
+      )}
+    >
+      <WindowTitleBar
+        className={cn(
+          'transition-opacity active:shadow-sm',
+          !isFocus && 'opacity-0',
+        )}
+        data-tauri-drag-region
+      />
+      <div className="p-1" style={computedStyle}>
         {!reader ? <p>请从托盘菜单打开一本小说</p> : null}
         {reader && line ? line : null}
         {reader && reader.read_progress === 100 && !line ? '（已读完）' : null}
       </div>
 
-      {isFocus && (
-        <div>
-          <div className="absolute top-0.5 left-0.5">
-            <div className="w-3 h-0.5 bg-primary" />
-            <div className="w-0.5 h-3 bg-primary" />
-          </div>
-          <div className="absolute top-0.5 right-0.5">
-            <div className="w-3 h-0.5 bg-primary ml-auto" />
-            <div className="w-0.5 h-3 bg-primary ml-auto" />
-          </div>
-          <div className="absolute bottom-0.5 left-0.5">
-            <div className="w-0.5 h-3 bg-primary" />
-            <div className="w-3 h-0.5 bg-primary" />
-          </div>
-          <div className="absolute bottom-0.5 right-0.5">
-            <div className="w-0.5 h-3 bg-primary ml-auto" />
-            <div className="w-3 h-0.5 bg-primary ml-auto" />
-          </div>
-        </div>
-      )}
+      <div className={cn('transition-opacity', !isFocus && 'opacity-0')}>
+        <Icon className="absolute h-6 w-6 -top-3 -left-3 text-black" />
+        <Icon className="absolute h-6 w-6 -bottom-3 -left-3 text-black" />
+        <Icon className="absolute h-6 w-6 -top-3 -right-3 text-black" />
+        <Icon className="absolute h-6 w-6 -bottom-3 -right-3 text-black" />
+      </div>
     </div>
   );
 }

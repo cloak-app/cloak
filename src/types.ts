@@ -9,15 +9,19 @@ export interface Novel {
   read_position: number;
   /** 阅读进度 */
   read_progress: number;
+  /** 文件大小 */
+  file_size: number;
+  /** 添加时间 */
+  created_at: string;
+  /** 更新时间 */
+  updated_at: string;
 }
 
 export interface Reader {
   /** 小说 ID */
   novel_id: number;
-  /** 小说标题 */
-  novel_title: string;
   /** 小说路径 */
-  path: string;
+  novel_path: string;
   /** 章节列表 */
   chapters: Chapter[];
   /** 当前章节 */
@@ -52,7 +56,7 @@ export interface Config {
   /** 行高 */
   line_height?: number;
   /** 字体粗细 */
-  font_weight?: number;
+  font_weight?: string;
   /** 字体颜色 */
   font_color?: string;
   /** 字间距 */

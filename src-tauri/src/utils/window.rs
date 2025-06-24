@@ -27,16 +27,6 @@ pub fn open_reader_window(app_handle: &AppHandle) -> Result<(), String> {
     Ok(())
 }
 
-pub fn close_reader_window(app_handle: &AppHandle) -> Result<(), String> {
-    let window = app_handle.get_webview_window("reader");
-
-    if let Some(window) = window {
-        window.destroy().unwrap();
-    }
-
-    Ok(())
-}
-
 pub fn open_settings_window(app_handle: &AppHandle) -> Result<(), String> {
     let window = app_handle.get_webview_window("settings");
 
@@ -45,6 +35,9 @@ pub fn open_settings_window(app_handle: &AppHandle) -> Result<(), String> {
     } else {
         WebviewWindowBuilder::new(app_handle, "settings", WebviewUrl::default())
             .min_inner_size(800.0, 600.0)
+            .decorations(false)
+            .shadow(false)
+            .transparent(true)
             .build()
             .unwrap();
     }
