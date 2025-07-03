@@ -2,7 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { Package } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-import ChapterSheet from './chapter-sheet';
+import ChapterDialog from './chapter-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -55,42 +55,38 @@ const Current: React.FC = () => {
   if (!reader || !novel) return null;
 
   return (
-    <>
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package size={16} />
-            <span>{novel.title}</span>
-            <Badge>当前阅读</Badge>
-          </CardTitle>
-          <CardDescription>继续你的阅读之旅</CardDescription>
-          <CardAction></CardAction>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>阅读进度</span>
-                <span className="font-medium">
-                  {read_progress?.toFixed(2)}%
-                </span>
-              </div>
-              <Progress value={read_progress} className="w-full h-2" />
-              <div className="flex justify-between text-sm text-muted-foreground">
-                <span>{current_chapter?.title}</span>
-                <span>共{chapters?.length}章</span>
-              </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Package size={16} />
+          <span>{novel.title}</span>
+          <Badge>当前阅读</Badge>
+        </CardTitle>
+        <CardDescription>继续你的阅读之旅</CardDescription>
+        <CardAction></CardAction>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span>阅读进度</span>
+              <span className="font-medium">{read_progress?.toFixed(2)}%</span>
+            </div>
+            <Progress value={read_progress} className="w-full h-2" />
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>{current_chapter?.title}</span>
+              <span>共{chapters?.length}章</span>
             </div>
           </div>
-        </CardContent>
-        <CardFooter className="gap-3">
-          <Button className="flex-1" onClick={handleContinue}>
-            继续阅读
-          </Button>
-          <ChapterSheet novel={novel} reader={reader} refresh={fetchData} />
-        </CardFooter>
-      </Card>
-    </>
+        </div>
+      </CardContent>
+      <CardFooter className="gap-3">
+        <Button className="flex-1" onClick={handleContinue}>
+          继续阅读
+        </Button>
+        <ChapterDialog novel={novel} reader={reader} refresh={fetchData} />
+      </CardFooter>
+    </Card>
   );
 };
 

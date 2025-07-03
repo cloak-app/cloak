@@ -114,4 +114,8 @@
   * {
     @apply border-border outline-ring/50;
   }
+
+  body[data-window='settings']  > #root {
+    @apply fixed h-screen w-screen border rounded-lg overflow-hidden bg-background;
+  }
 }

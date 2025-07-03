@@ -33,20 +33,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Novel, Reader } from '@/types';
+import { Novel } from '@/types';
 
 const Library: React.FC = () => {
-  const { data: novelList, refresh: refreshNovelList } = useRequest(() =>
+  const { data: novelList, refresh } = useRequest(() =>
     invoke<Novel[]>('get_novel_list'),
   );
-  const { data: currentReader, refresh: refreshCurrentReader } = useRequest(
-    () => invoke<Reader>('get_novel_reader'),
-  );
 
-  const refresh = () => {
-    refreshNovelList();
-    refreshCurrentReader();
-  };
+  console.log(novelList);
 
   const handleDelete = (id: number) => {
     toast.promise(invoke('delete_novel', { id }), {
@@ -151,7 +145,7 @@ const Library: React.FC = () => {
                 <Progress className="mt-2" value={novel.read_progress} />
               </CardContent>
               <CardFooter className="gap-2">
-                {novel.id === currentReader?.novel_id ? (
+                {novel.is_open ? (
                   <Button className="flex-1" onClick={handleContinue}>
                     继续阅读
                   </Button>

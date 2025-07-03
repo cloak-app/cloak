@@ -2,17 +2,19 @@ import { invoke } from '@tauri-apps/api/core';
 import { ChevronRight, LocateFixed } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
+import { ScrollMask } from '@/components/ui/scroll-mask';
+import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { Chapter, Novel, Reader } from '@/types';
 
@@ -78,7 +80,7 @@ const ChapterList = (props: ChapterListProps) => {
 
   return (
     <>
-      <ScrollArea ref={scrollAreaRef} className="flex-1 h-0 relative px-4">
+      <ScrollArea ref={scrollAreaRef} className="flex-1 h-0 relative">
         <div className="space-y-2">
           {chapterList?.map((chapter) => {
             const isRead =
@@ -118,24 +120,25 @@ const ChapterList = (props: ChapterListProps) => {
           })}
         </div>
         {isLocateButtonVisible && (
-          <div className="absolute bottom-6 right-6">
+          <div className="absolute bottom-6 right-6 z-999">
             <Button variant="outline" size="icon" onClick={scrollIntoView}>
               <LocateFixed />
             </Button>
           </div>
         )}
+        <ScrollMask />
       </ScrollArea>
     </>
   );
 };
 
-interface ChapterSheetProps {
+interface ChapterDialogProps {
   novel?: Novel;
   reader?: Reader;
   refresh: () => void;
 }
 
-const ChapterSheet: React.FC<ChapterSheetProps> = (props) => {
+const ChapterDialog: React.FC<ChapterDialogProps> = (props) => {
   const { novel, reader, refresh } = props;
   const { chapters, current_chapter, novel_id } = reader || {};
   const [chapterSearch, setChapterSearch] = useState('');
@@ -149,41 +152,37 @@ const ChapterSheet: React.FC<ChapterSheetProps> = (props) => {
   ).length;
 
   return (
-    <Sheet>
-      <SheetTrigger asChild>
+    <Dialog>
+      <DialogTrigger asChild>
         <Button variant="outline">章节目录</Button>
-      </SheetTrigger>
-      <SheetContent className="h-full flex flex-col overflow-hidden">
-        <SheetHeader>
-          <SheetTitle>章节目录</SheetTitle>
-          <SheetDescription>
+      </DialogTrigger>
+      <DialogContent className="h-4/5 flex flex-col overflow-hidden">
+        <DialogHeader>
+          <DialogTitle>章节目录</DialogTitle>
+          <DialogDescription>
             {novel?.title} - 共 {chapters?.length} 章
-          </SheetDescription>
-        </SheetHeader>
-
-        <div className="px-4">
-          <Input
-            placeholder="搜索章节..."
-            value={chapterSearch}
-            onChange={(e) => setChapterSearch(e.target.value)}
-          />
-        </div>
-
+          </DialogDescription>
+        </DialogHeader>
+        <Input
+          placeholder="搜索章节..."
+          value={chapterSearch}
+          onChange={(e) => setChapterSearch(e.target.value)}
+        />
+        <Separator />
         <ChapterList
           chapterList={filteredChapters}
           current_chapter={current_chapter}
           novel_id={novel_id}
           refresh={refresh}
         />
-
-        <SheetFooter>
+        <DialogFooter>
           <span className="text-sm text-muted-foreground">
             已读 {readChaptersCount} 章
           </span>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 
-export default ChapterSheet;
+export default ChapterDialog;

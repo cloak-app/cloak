@@ -11,4 +11,5 @@ pub struct Novel {
     pub file_size: i64,
     pub created_at: String,
     pub updated_at: String,
+    pub is_open: i64,
 }

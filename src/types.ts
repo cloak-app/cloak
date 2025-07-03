@@ -15,6 +15,8 @@ export interface Novel {
   created_at: string;
   /** 更新时间 */
   updated_at: string;
+  /** 是否打开 */
+  is_open: boolean;
 }
 
 export interface Reader {
