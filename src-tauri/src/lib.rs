@@ -7,11 +7,12 @@ mod utils;
 use crate::commands::{config, novel, os, reader, window};
 use crate::db::setup_db;
 use crate::state::model::AppState;
-use crate::state::{toggle_reading_mode, TrayIcon};
+use crate::state::toggle_reading_mode;
 use crate::store::model::AppStoreKey;
 use crate::store::{get_from_app_store, init_app_store};
+use crate::utils::icon::*;
 use crate::utils::reader::NovelReader;
-use crate::utils::shortcut::{self, AppShortcut};
+use crate::utils::shortcut;
 use crate::utils::sql;
 use crate::utils::update::update;
 use crate::utils::window::{open_reader_window, open_settings_window, show_all_windows};
@@ -95,7 +96,7 @@ pub fn run() {
             config::activate_all_shortcuts,
             config::unregister_all_shortcuts,
             // 系统相关
-            os::show_in_folder,
+            os::reveal_item_in_dir,
             os::get_all_font_families,
             // 窗口相关
             window::open_reader_window,
@@ -130,7 +131,7 @@ pub fn run() {
             });
 
             /* --------------------------------- 注册全局快捷键 -------------------------------- */
-            shortcut::activate_shortcuts(app.handle(), AppShortcut::common_shortcuts())?;
+            shortcut::activate_shortcuts(app.handle(), shortcut::AppShortcut::common_shortcuts())?;
 
             /* ---------------------------------- 系统设置 ---------------------------------- */
             #[cfg(target_os = "macos")]
@@ -163,7 +164,7 @@ pub fn run() {
                 .item(&quit_i)
                 .build()?;
 
-            let default_tray_icon = TrayIcon::get_default_tray_icon(app.handle()).unwrap();
+            let default_tray_icon = get_default_tray_icon(app.handle()).unwrap();
 
             TrayIconBuilder::with_id("tray")
                 .icon(default_tray_icon)
@@ -173,13 +174,13 @@ pub fn run() {
                         app_handle.exit(0);
                     }
                     "settings" => {
-                        open_settings_window(app_handle).expect("Failed to open settings window");
+                        open_settings_window(app_handle).expect("打开设置窗口失败");
                     }
                     "open_reader" => {
-                        open_reader_window(app_handle).expect("Failed to open reader window");
+                        open_reader_window(app_handle).expect("打开阅读器窗口失败");
                     }
                     "toggle_reading_mode" => {
-                        toggle_reading_mode(app_handle).expect("Failed to toggle reading mode");
+                        toggle_reading_mode(app_handle).expect("切换阅读模式失败");
                     }
                     _ => unreachable!(),
                 })
@@ -196,7 +197,7 @@ pub fn run() {
             Ok(())
         })
         .build(tauri::generate_context!())
-        .expect("error while running tauri application")
+        .expect("运行 Tauri 应用失败")
         .run(|_, event| {
             if let RunEvent::ExitRequested { api, code, .. } = event {
                 if code.is_none() {

@@ -10,10 +10,10 @@ pub async fn add_novel(db: &Db, title: &str, path: &str, file_size: i64) -> Resu
     .bind(path)
     .bind(0)
     .bind(0)
-    .bind(file_size as i64)
+    .bind(file_size)
     .execute(db)
     .await
-    .map_err(|e| format!("Error executing query: {}", e))?;
+    .map_err(|e| format!("添加小说失败: {}", e))?;
 
     Ok(())
 }
@@ -24,7 +24,7 @@ pub async fn get_novel_by_id(db: &Db, id: i64) -> Result<Novel, String> {
         .bind(id)
         .fetch_one(db)
         .await
-        .map_err(|e| format!("Error fetching novel: {}", e))?;
+        .map_err(|e| format!("获取小说失败: {}", e))?;
 
     Ok(novel)
 }
@@ -34,7 +34,7 @@ pub async fn get_novel_list(db: &Db) -> Result<Vec<Novel>, String> {
     let novels = sqlx::query_as::<_, Novel>("SELECT * FROM novel")
         .fetch_all(db)
         .await
-        .map_err(|e| format!("Error fetching novels: {}", e))?;
+        .map_err(|e| format!("获取小说列表失败: {}", e))?;
 
     Ok(novels)
 }
@@ -52,7 +52,7 @@ pub async fn save_novel(
         .bind(novel_id)
         .execute(db)
         .await
-        .map_err(|e| format!("Error saving novel: {}", e))?;
+        .map_err(|e| format!("保存小说失败: {}", e))?;
 
     Ok(())
 }
@@ -63,7 +63,7 @@ pub async fn delete_novel(db: &Db, id: i64) -> Result<(), String> {
         .bind(id)
         .execute(db)
         .await
-        .map_err(|e| format!("Error deleting novel: {}", e))?;
+        .map_err(|e| format!("删除小说失败: {}", e))?;
 
     Ok(())
 }
@@ -74,7 +74,7 @@ pub async fn open_novel(db: &Db, id: i64) -> Result<(), String> {
         .bind(id)
         .execute(db)
         .await
-        .map_err(|e| format!("Error opening novel: {}", e))?;
+        .map_err(|e| format!("打开小说失败: {}", e))?;
 
     Ok(())
 }
@@ -85,7 +85,7 @@ pub async fn close_novel(db: &Db, id: i64) -> Result<(), String> {
         .bind(id)
         .execute(db)
         .await
-        .map_err(|e| format!("Error closing novel: {}", e))?;
+        .map_err(|e| format!("关闭小说失败: {}", e))?;
 
     Ok(())
 }
@@ -95,7 +95,7 @@ pub async fn get_open_novel(db: &Db) -> Result<Novel, String> {
     let novel = sqlx::query_as::<_, Novel>("SELECT * FROM novel WHERE is_open = 1")
         .fetch_one(db)
         .await
-        .map_err(|e| format!("Error fetching open novel: {}", e))?;
+        .map_err(|e| format!("获取正在阅读的小说失败: {}", e))?;
 
     Ok(novel)
 }

@@ -82,7 +82,7 @@ const Library: React.FC = () => {
   };
 
   const handleOpenFileDirectory = (path: string) => {
-    invoke('show_in_folder', { path });
+    invoke('reveal_item_in_dir', { path });
   };
 
   const [filter, setFilter] = useState('ALL');

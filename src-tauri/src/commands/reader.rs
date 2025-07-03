@@ -15,7 +15,7 @@ pub async fn get_novel_reader(
     if let Some(reader) = reader {
         Ok(reader.clone())
     } else {
-        Err("No novel is currently open".to_string())
+        Err("暂无打开的小说".to_string())
     }
 }
 
@@ -43,7 +43,7 @@ pub async fn get_line(state: tauri::State<'_, Mutex<AppState>>) -> Result<String
         let line = reader.get_line().unwrap_or("");
         Ok(line.to_string())
     } else {
-        Err("No novel is currently open".to_string())
+        Err("暂无打开的小说".to_string())
     }
 }
 
@@ -69,7 +69,7 @@ pub async fn set_read_position(
                 reader.read_progress(),
             )
         } else {
-            return Err("No novel is currently open".to_string());
+            return Err("暂无打开的小说".to_string());
         }
     };
 
@@ -99,7 +99,7 @@ pub async fn next_line(
                 reader.read_progress(),
             )
         } else {
-            return Err("No novel is currently open".to_string());
+            return Err("暂无打开的小说".to_string());
         }
     };
 
@@ -129,7 +129,7 @@ pub async fn prev_line(
                 reader.read_progress(),
             )
         } else {
-            return Err("No novel is currently open".to_string());
+            return Err("暂无打开的小说".to_string());
         }
     };
 
@@ -159,7 +159,7 @@ pub async fn next_chapter(
                 reader.read_progress(),
             )
         } else {
-            return Err("No novel is currently open".to_string());
+            return Err("暂无打开的小说".to_string());
         }
     };
 
@@ -189,7 +189,7 @@ pub async fn prev_chapter(
                 reader.read_progress(),
             )
         } else {
-            return Err("No novel is currently open".to_string());
+            return Err("暂无打开的小说".to_string());
         }
     };
 

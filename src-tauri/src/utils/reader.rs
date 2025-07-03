@@ -55,7 +55,7 @@ impl NovelReader {
     }
 
     pub fn read_lines(path: &str, line_size: usize) -> Result<(Vec<String>, Vec<Chapter>), String> {
-        let file = File::open(&path).map_err(|e| e.to_string())?;
+        let file = File::open(path).map_err(|e| e.to_string())?;
         let buf_reader = BufReader::new(file);
 
         let mut lines = Vec::new();
@@ -64,7 +64,7 @@ impl NovelReader {
         let chapter_re = Regex::new(r"^(第[零一二三四五六七八九十百千万1-9]+章.*)$")
             .map_err(|e| e.to_string())?;
 
-        for (_, line) in buf_reader.lines().enumerate() {
+        for line in buf_reader.lines() {
             let line_string = line.map_err(|e| e.to_string())?;
 
             // 如果是章节，直接添加行
@@ -126,7 +126,7 @@ impl NovelReader {
 
     pub fn set_read_position(&mut self, read_position: usize) -> Result<(), String> {
         if read_position >= self.lines.len() {
-            return Err("Line number out of bounds".to_string());
+            return Err("行号超出范围".to_string());
         }
 
         self.read_position = read_position;
@@ -136,7 +136,7 @@ impl NovelReader {
 
     pub fn next_line(&mut self) -> Result<(), String> {
         if self.read_position >= self.lines.len() {
-            return Err("Line number out of bounds".to_string());
+            return Err("行号超出范围".to_string());
         }
 
         self.read_position += 1;
@@ -146,7 +146,7 @@ impl NovelReader {
 
     pub fn prev_line(&mut self) -> Result<(), String> {
         if self.read_position == 0 {
-            return Err("Line number out of bounds".to_string());
+            return Err("行号超出范围".to_string());
         }
 
         self.read_position -= 1;
@@ -164,7 +164,7 @@ impl NovelReader {
 
         if let Some(next_chapter_index) = next_chapter_index {
             if next_chapter_index + 1 >= self.chapters.len() {
-                return Err("No next chapter".to_string());
+                return Err("没有下一章节".to_string());
             }
 
             let next_chapter = &self.chapters[next_chapter_index + 1];
@@ -184,7 +184,7 @@ impl NovelReader {
 
         if let Some(prev_chapter_index) = prev_chapter_index {
             if prev_chapter_index == 0 {
-                return Err("No previous chapter".to_string());
+                return Err("没有上一章节".to_string());
             }
 
             let prev_chapter = &self.chapters[prev_chapter_index - 1];

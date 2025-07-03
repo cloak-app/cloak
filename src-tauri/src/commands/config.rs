@@ -3,7 +3,7 @@ use crate::state::model::AppState;
 use crate::store::model::AppStoreKey;
 use crate::store::{reset_app_store, set_to_app_store};
 use crate::utils::reader::NovelReader;
-use crate::utils::shortcut::{self, AppShortcut};
+use crate::utils::shortcut;
 use crate::utils::sql;
 use serde_json::Value;
 use std::sync::Mutex;
@@ -35,7 +35,7 @@ pub fn set_dock_visibility(
     app_handle: tauri::AppHandle,
     dock_visibility: bool,
 ) -> Result<(), String> {
-    set_to_app_store(&app_handle, AppStoreKey::DockVisibility, &dock_visibility)?;
+    set_to_app_store(&app_handle, AppStoreKey::DockVisibility, dock_visibility)?;
 
     #[cfg(target_os = "macos")]
     app_handle
@@ -46,7 +46,7 @@ pub fn set_dock_visibility(
 
 #[tauri::command]
 pub fn set_always_on_top(app_handle: tauri::AppHandle, always_on_top: bool) -> Result<(), String> {
-    set_to_app_store(&app_handle, AppStoreKey::AlwaysOnTop, &always_on_top)?;
+    set_to_app_store(&app_handle, AppStoreKey::AlwaysOnTop, always_on_top)?;
 
     let window = app_handle.get_webview_window("reader");
 
@@ -61,7 +61,7 @@ pub fn set_always_on_top(app_handle: tauri::AppHandle, always_on_top: bool) -> R
 
 #[tauri::command]
 pub fn set_transparent(app_handle: tauri::AppHandle, transparent: bool) -> Result<(), String> {
-    set_to_app_store(&app_handle, AppStoreKey::Transparent, &transparent)?;
+    set_to_app_store(&app_handle, AppStoreKey::Transparent, transparent)?;
     Ok(())
 }
 
@@ -74,12 +74,12 @@ pub async fn set_line_size(
     state: tauri::State<'_, Mutex<AppState>>,
     line_size: usize,
 ) -> Result<(), String> {
-    set_to_app_store(&app_handle, AppStoreKey::LineSize, &line_size)?;
+    set_to_app_store(&app_handle, AppStoreKey::LineSize, line_size)?;
 
     let (novel_id, read_position, read_progress) = {
         let mut state = state.lock().map_err(|e| e.to_string())?;
         let Some(reader) = &mut state.novel_reader else {
-            return Err("No novel reader found".to_string());
+            return Err("暂无打开的小说".to_string());
         };
 
         let current_chapter = reader.current_chapter();
@@ -90,7 +90,7 @@ pub async fn set_line_size(
             .iter()
             .find(|chapter| chapter.index == current_chapter.index)
             .map(|chapter| chapter.start_line)
-            .expect("No chapter found");
+            .expect("当前章节丢失");
 
         reader.lines = lines;
         reader.chapters = chapters;
@@ -111,42 +111,42 @@ pub async fn set_line_size(
 
 #[tauri::command]
 pub fn set_font_size(app_handle: tauri::AppHandle, font_size: i64) -> Result<(), String> {
-    set_to_app_store(&app_handle, AppStoreKey::FontSize, &font_size)?;
+    set_to_app_store(&app_handle, AppStoreKey::FontSize, font_size)?;
     app_handle.emit("config-change", 0).unwrap();
     Ok(())
 }
 
 #[tauri::command]
 pub fn set_font_family(app_handle: tauri::AppHandle, font_family: String) -> Result<(), String> {
-    set_to_app_store(&app_handle, AppStoreKey::FontFamily, &font_family)?;
+    set_to_app_store(&app_handle, AppStoreKey::FontFamily, font_family)?;
     app_handle.emit("config-change", 0).unwrap();
     Ok(())
 }
 
 #[tauri::command]
 pub fn set_line_height(app_handle: tauri::AppHandle, line_height: f64) -> Result<(), String> {
-    set_to_app_store(&app_handle, AppStoreKey::LineHeight, &line_height)?;
+    set_to_app_store(&app_handle, AppStoreKey::LineHeight, line_height)?;
     app_handle.emit("config-change", 0).unwrap();
     Ok(())
 }
 
 #[tauri::command]
 pub fn set_letter_spacing(app_handle: tauri::AppHandle, letter_spacing: f64) -> Result<(), String> {
-    set_to_app_store(&app_handle, AppStoreKey::LetterSpacing, &letter_spacing)?;
+    set_to_app_store(&app_handle, AppStoreKey::LetterSpacing, letter_spacing)?;
     app_handle.emit("config-change", 0).unwrap();
     Ok(())
 }
 
 #[tauri::command]
 pub fn set_font_weight(app_handle: tauri::AppHandle, font_weight: i64) -> Result<(), String> {
-    set_to_app_store(&app_handle, AppStoreKey::FontWeight, &font_weight)?;
+    set_to_app_store(&app_handle, AppStoreKey::FontWeight, font_weight)?;
     app_handle.emit("config-change", 0).unwrap();
     Ok(())
 }
 
 #[tauri::command]
 pub fn set_font_color(app_handle: tauri::AppHandle, font_color: String) -> Result<(), String> {
-    set_to_app_store(&app_handle, AppStoreKey::FontColor, &font_color)?;
+    set_to_app_store(&app_handle, AppStoreKey::FontColor, font_color)?;
     app_handle.emit("config-change", 0).unwrap();
     Ok(())
 }
@@ -158,7 +158,7 @@ pub fn set_next_line_shortcut(
     app_handle: tauri::AppHandle,
     shortcut: String,
 ) -> Result<(), String> {
-    set_to_app_store(&app_handle, AppStoreKey::NextLineShortcut, &shortcut)?;
+    set_to_app_store(&app_handle, AppStoreKey::NextLineShortcut, shortcut)?;
     Ok(())
 }
 
@@ -167,7 +167,7 @@ pub fn set_prev_line_shortcut(
     app_handle: tauri::AppHandle,
     shortcut: String,
 ) -> Result<(), String> {
-    set_to_app_store(&app_handle, AppStoreKey::PrevLineShortcut, &shortcut)?;
+    set_to_app_store(&app_handle, AppStoreKey::PrevLineShortcut, shortcut)?;
     Ok(())
 }
 
@@ -176,7 +176,7 @@ pub fn set_next_chapter_shortcut(
     app_handle: tauri::AppHandle,
     shortcut: String,
 ) -> Result<(), String> {
-    set_to_app_store(&app_handle, AppStoreKey::NextChapterShortcut, &shortcut)?;
+    set_to_app_store(&app_handle, AppStoreKey::NextChapterShortcut, shortcut)?;
     Ok(())
 }
 
@@ -185,13 +185,13 @@ pub fn set_prev_chapter_shortcut(
     app_handle: tauri::AppHandle,
     shortcut: String,
 ) -> Result<(), String> {
-    set_to_app_store(&app_handle, AppStoreKey::PrevChapterShortcut, &shortcut)?;
+    set_to_app_store(&app_handle, AppStoreKey::PrevChapterShortcut, shortcut)?;
     Ok(())
 }
 
 #[tauri::command]
 pub fn set_boss_key_shortcut(app_handle: tauri::AppHandle, shortcut: String) -> Result<(), String> {
-    set_to_app_store(&app_handle, AppStoreKey::BossKeyShortcut, &shortcut)?;
+    set_to_app_store(&app_handle, AppStoreKey::BossKeyShortcut, shortcut)?;
     Ok(())
 }
 
@@ -203,7 +203,7 @@ pub fn set_toggle_reading_mode_shortcut(
     set_to_app_store(
         &app_handle,
         AppStoreKey::ToggleReadingModeShortcut,
-        &shortcut,
+        shortcut,
     )?;
     Ok(())
 }
@@ -223,9 +223,9 @@ pub fn activate_all_shortcuts(
     let reading_mode = state.reading_mode;
 
     let shortcuts = if reading_mode {
-        AppShortcut::all_shortcuts()
+        shortcut::AppShortcut::all_shortcuts()
     } else {
-        AppShortcut::common_shortcuts()
+        shortcut::AppShortcut::common_shortcuts()
     };
 
     shortcut::activate_shortcuts(&app_handle, shortcuts)?;
@@ -247,9 +247,9 @@ pub fn reset_config(
     let reading_mode = state.reading_mode;
 
     let shortcuts = if reading_mode {
-        AppShortcut::all_shortcuts()
+        shortcut::AppShortcut::all_shortcuts()
     } else {
-        AppShortcut::common_shortcuts()
+        shortcut::AppShortcut::common_shortcuts()
     };
 
     shortcut::activate_shortcuts(&app_handle, shortcuts)?;

@@ -1,3 +1,4 @@
+pub mod icon;
 pub mod reader;
 pub mod shortcut;
 pub mod sql;

@@ -59,6 +59,14 @@ const watchFileUpdated = (filePath) => {
 };
 
 async function main() {
+  /* ------------------------------ 校验代码是否可以编译通过 ------------------------------ */
+  try {
+    execSync('pnpm prerelease', { stdio: 'inherit' });
+  } catch (e) {
+    console.error('[ERROR]: Failed to check code compilation:', e);
+    process.exit(1);
+  }
+
   /* -------------------------------- 读取原始文件内容 -------------------------------- */
   const packageJsonPath = path.join('package.json');
   const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));

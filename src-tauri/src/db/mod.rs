@@ -6,33 +6,25 @@ pub mod model;
 pub type Db = Pool<Sqlite>;
 
 pub async fn setup_db(app: &App) -> Db {
-    let mut path = app.path().app_data_dir().expect("failed to get data_dir");
+    let mut path = app.path().app_data_dir().expect("获取目录失败");
 
-    match std::fs::create_dir_all(path.clone()) {
-        Ok(_) => {}
-        Err(err) => {
-            panic!("error creating directory {}", err);
-        }
-    };
+    std::fs::create_dir_all(path.clone()).expect("创建目录失败");
 
     path.push("db.sqlite");
 
-    Sqlite::create_database(
-        format!(
-            "sqlite:{}",
-            path.to_str().expect("path should be something")
-        )
-        .as_str(),
-    )
-    .await
-    .expect("failed to create database");
+    Sqlite::create_database(format!("sqlite:{}", path.to_str().unwrap()).as_str())
+        .await
+        .expect("创建数据库失败");
 
     let db = SqlitePoolOptions::new()
         .connect(path.to_str().unwrap())
         .await
-        .unwrap();
+        .expect("连接数据库失败");
 
-    sqlx::migrate!("./migrations").run(&db).await.unwrap();
+    sqlx::migrate!("./migrations")
+        .run(&db)
+        .await
+        .expect("数据库迁移失败");
 
     db
 }

@@ -101,7 +101,7 @@ pub fn unregister_all_shortcuts(app_handle: &AppHandle) -> Result<(), String> {
     app_handle
         .global_shortcut()
         .unregister_all()
-        .map_err(|err| format!("Failed to unregister all shortcuts '{}'", err))?;
+        .map_err(|err| format!("取消全部快捷键失败: {err}"))?;
 
     Ok(())
 }
@@ -164,7 +164,7 @@ fn register_shortcut(app_handle: &AppHandle, app_shortcut: AppShortcut) -> Resul
                 }
             }
         })
-        .map_err(|err| format!("Failed to register new shortcut '{}'", err))?;
+        .map_err(|err| format!("注册快捷键失败: {err}"))?;
 
     Ok(())
 }
@@ -178,7 +178,7 @@ pub fn unregister_shortcut(
     app_handle
         .global_shortcut()
         .unregister(shortcut)
-        .map_err(|err| format!("Failed to unregister previous shortcut '{}'", err))?;
+        .map_err(|err| format!("取消快捷键失败: {err}"))?;
 
     Ok(())
 }

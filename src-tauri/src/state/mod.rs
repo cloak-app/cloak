@@ -1,34 +1,10 @@
 pub mod model;
 
 use crate::state::model::AppState;
+use crate::utils::icon::*;
 use crate::utils::shortcut::{self, AppShortcut};
 use std::sync::Mutex;
-use tauri::{image::Image, menu::Menu, path::BaseDirectory, AppHandle, Manager, Wry};
-
-pub static DEFAULT_TRAY_ICON_PATH: &str = "icons/tray-icon.ico";
-pub static ACTIVE_TRAY_ICON_PATH: &str = "icons/tray-icon-active.ico";
-
-pub struct TrayIcon {}
-
-impl TrayIcon {
-    pub fn get_default_tray_icon(app_handle: &AppHandle) -> Result<Image, String> {
-        let default_tray_icon_path = app_handle
-            .path()
-            .resolve(DEFAULT_TRAY_ICON_PATH, BaseDirectory::Resource)
-            .map_err(|e| format!("默认图标路径解析失败: {e}"))?;
-
-        Image::from_path(default_tray_icon_path).map_err(|e| format!("默认图标读取失败: {e}"))
-    }
-
-    pub fn get_active_tray_icon_path(app_handle: &AppHandle) -> Result<Image, String> {
-        let active_tray_icon_path = app_handle
-            .path()
-            .resolve(ACTIVE_TRAY_ICON_PATH, BaseDirectory::Resource)
-            .map_err(|e| format!("激活态图标路径解析失败: {e}"))?;
-
-        Image::from_path(active_tray_icon_path).map_err(|e| format!("激活态图标读取失败: {e}"))
-    }
-}
+use tauri::{menu::Menu, AppHandle, Manager, Wry};
 
 pub fn toggle_reading_mode(app_handle: &AppHandle) -> Result<(), String> {
     let state = app_handle.state::<Mutex<AppState>>();
@@ -45,7 +21,7 @@ pub fn toggle_reading_mode(app_handle: &AppHandle) -> Result<(), String> {
 
     if !state.reading_mode {
         tray_icon
-            .set_icon(TrayIcon::get_default_tray_icon(app_handle).ok())
+            .set_icon(get_default_tray_icon(app_handle).ok())
             .map_err(|e| format!("设置默认托盘图标失败: {e}"))?;
         toggle_reading_mode_i
             .as_menuitem()
@@ -53,15 +29,19 @@ pub fn toggle_reading_mode(app_handle: &AppHandle) -> Result<(), String> {
 
         let app_handle = app_handle.clone();
         tauri::async_runtime::spawn(async move {
-            if let Err(e) =
-                shortcut::deactivate_shortcuts(&app_handle, AppShortcut::reading_mode_shortcuts())
+            match shortcut::deactivate_shortcuts(&app_handle, AppShortcut::reading_mode_shortcuts())
             {
-                log::error!(target: "toggle_reading_mode", "移除快捷键失败: {e}");
+                Ok(_) => {
+                    log::info!(target: "toggle_reading_mode", "移除快捷键成功");
+                }
+                Err(e) => {
+                    log::error!(target: "toggle_reading_mode", "移除快捷键失败: {e}");
+                }
             }
         });
     } else {
         tray_icon
-            .set_icon(TrayIcon::get_active_tray_icon_path(app_handle).ok())
+            .set_icon(get_active_tray_icon_path(app_handle).ok())
             .map_err(|e| format!("设置阅读态托盘图标失败: {e}"))?;
         toggle_reading_mode_i
             .as_menuitem()
@@ -69,10 +49,13 @@ pub fn toggle_reading_mode(app_handle: &AppHandle) -> Result<(), String> {
 
         let app_handle = app_handle.clone();
         tauri::async_runtime::spawn(async move {
-            if let Err(e) =
-                shortcut::activate_shortcuts(&app_handle, AppShortcut::reading_mode_shortcuts())
-            {
-                log::error!(target: "toggle_reading_mode", "激活快捷键失败: {e}");
+            match shortcut::activate_shortcuts(&app_handle, AppShortcut::reading_mode_shortcuts()) {
+                Ok(_) => {
+                    log::info!(target: "toggle_reading_mode", "激活快捷键成功");
+                }
+                Err(e) => {
+                    log::error!(target: "toggle_reading_mode", "激活快捷键失败: {e}");
+                }
             }
         });
     }
