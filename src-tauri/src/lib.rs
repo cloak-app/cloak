@@ -7,19 +7,17 @@ mod utils;
 use crate::commands::{config, novel, os, reader, window};
 use crate::db::setup_db;
 use crate::state::model::AppState;
+use crate::state::{toggle_reading_mode, TrayIcon};
 use crate::store::model::AppStoreKey;
 use crate::store::{get_from_app_store, init_app_store};
-use crate::utils::novel::get_novel_by_id;
 use crate::utils::reader::NovelReader;
-use crate::utils::shortcut::AppShortcut;
+use crate::utils::shortcut::{self, AppShortcut};
+use crate::utils::sql;
 use crate::utils::update::update;
 use crate::utils::window::{open_reader_window, open_settings_window, show_all_windows};
 use log::LevelFilter;
 use std::sync::Mutex;
-use tauri::image::Image;
-use tauri::menu::*;
-use tauri::tray::TrayIconBuilder;
-use tauri::{Manager, RunEvent};
+use tauri::{is_dev, menu::*, tray::TrayIconBuilder, Manager, RunEvent};
 use tauri_plugin_dialog::{DialogExt, MessageDialogButtons, MessageDialogKind};
 use tauri_plugin_log::fern::colors::ColoredLevelConfig;
 
@@ -36,7 +34,11 @@ pub fn run() {
         .plugin(
             tauri_plugin_log::Builder::new()
                 .with_colors(ColoredLevelConfig::default())
-                .level(LevelFilter::Warn)
+                .level(if is_dev() {
+                    LevelFilter::Debug
+                } else {
+                    LevelFilter::Warn
+                })
                 .build(),
         )
         .plugin(tauri_plugin_single_instance::init(|app_handle, _, _| {
@@ -62,6 +64,7 @@ pub fn run() {
             novel::add_novel,
             novel::get_novel_list,
             novel::open_novel,
+            novel::close_novel,
             novel::delete_novel,
             novel::get_novel_detail,
             // 阅读相关
@@ -88,6 +91,7 @@ pub fn run() {
             config::set_next_chapter_shortcut,
             config::set_prev_chapter_shortcut,
             config::set_boss_key_shortcut,
+            config::set_toggle_reading_mode_shortcut,
             config::activate_all_shortcuts,
             config::unregister_all_shortcuts,
             // 系统相关
@@ -97,11 +101,6 @@ pub fn run() {
             window::open_reader_window,
         ])
         .setup(|app| {
-            /* -------------------------------- 设置 panic 钩子 -------------------------------- */
-            std::panic::set_hook(Box::new(|info| {
-                log::error!("unhandled panic: {:?}", info);
-            }));
-
             /* -------------------------------- 初始化全局上下文 -------------------------------- */
             init_app_store(app.handle())?;
 
@@ -110,22 +109,17 @@ pub fn run() {
 
                 let mut novel_reader: Option<NovelReader> = None;
 
-                let last_read_novel_id =
-                    get_from_app_store::<i64>(app.handle(), AppStoreKey::LastReadNovelId);
+                let line_size =
+                    get_from_app_store::<usize>(app.handle(), AppStoreKey::LineSize).unwrap_or(50);
 
-                let line_size = get_from_app_store::<usize>(app.handle(), AppStoreKey::LineSize);
-
-                if let (Ok(Some(id)), Ok(Some(line_size))) = (last_read_novel_id, line_size) {
-                    let novel = get_novel_by_id(&db, id).await.ok();
-                    if let Some(novel) = novel {
-                        novel_reader = NovelReader::new(
-                            novel.id,
-                            novel.path,
-                            novel.read_position as usize,
-                            line_size,
-                        )
-                        .ok();
-                    }
+                if let Ok(novel) = sql::get_open_novel(&db).await {
+                    novel_reader = NovelReader::new(
+                        novel.id,
+                        novel.path,
+                        novel.read_position as usize,
+                        line_size,
+                    )
+                    .ok();
                 }
 
                 app.manage(db);
@@ -136,13 +130,13 @@ pub fn run() {
             });
 
             /* --------------------------------- 注册全局快捷键 -------------------------------- */
-            AppShortcut::activate_shortcuts(app.handle(), AppShortcut::get_common_shortcuts())?;
+            shortcut::activate_shortcuts(app.handle(), AppShortcut::common_shortcuts())?;
 
             /* ---------------------------------- 系统设置 ---------------------------------- */
             #[cfg(target_os = "macos")]
             {
                 let dock_visibility =
-                    get_from_app_store::<bool>(app.handle(), AppStoreKey::DockVisibility)?
+                    get_from_app_store::<bool>(app.handle(), AppStoreKey::DockVisibility)
                         .unwrap_or(false);
                 app.set_dock_visibility(dock_visibility);
             }
@@ -169,60 +163,29 @@ pub fn run() {
                 .item(&quit_i)
                 .build()?;
 
-            let default_tray_icon_path = app
-                .path()
-                .resolve("icons/tray-icon.ico", tauri::path::BaseDirectory::Resource)?;
-            let active_tray_icon_path = app.path().resolve(
-                "icons/tray-icon-active.ico",
-                tauri::path::BaseDirectory::Resource,
-            )?;
+            let default_tray_icon = TrayIcon::get_default_tray_icon(app.handle()).unwrap();
 
             TrayIconBuilder::with_id("tray")
-                .icon(Image::from_path(default_tray_icon_path.clone()).unwrap())
+                .icon(default_tray_icon)
                 .menu(&menu)
                 .on_menu_event(move |app_handle, event| match event.id.as_ref() {
                     "quit" => {
                         app_handle.exit(0);
                     }
                     "settings" => {
-                        open_settings_window(app_handle).unwrap();
+                        open_settings_window(app_handle).expect("Failed to open settings window");
                     }
                     "open_reader" => {
                         open_reader_window(app_handle).expect("Failed to open reader window");
                     }
                     "toggle_reading_mode" => {
-                        let state = app_handle.state::<Mutex<AppState>>();
-                        let mut state = state.lock().unwrap();
-                        state.reading_mode = !state.reading_mode;
-                        let tray_icon = app_handle.tray_by_id("tray").unwrap();
-
-                        if !state.reading_mode {
-                            tray_icon
-                                .set_icon(Image::from_path(default_tray_icon_path.clone()).ok())
-                                .unwrap();
-
-                            toggle_reading_mode_i.set_text("打开阅读模式").unwrap();
-                            AppShortcut::deactivate_shortcuts(
-                                app_handle,
-                                AppShortcut::get_reading_mode_shortcuts(),
-                            )
-                            .unwrap();
-                        } else {
-                            tray_icon
-                                .set_icon(Image::from_path(active_tray_icon_path.clone()).ok())
-                                .unwrap();
-
-                            toggle_reading_mode_i.set_text("关闭阅读模式").unwrap();
-                            AppShortcut::activate_shortcuts(
-                                app_handle,
-                                AppShortcut::get_reading_mode_shortcuts(),
-                            )
-                            .unwrap();
-                        }
+                        toggle_reading_mode(app_handle).expect("Failed to toggle reading mode");
                     }
                     _ => unreachable!(),
                 })
                 .build(app)?;
+
+            app.manage(menu);
 
             /* ---------------------------------- 检查更新 ---------------------------------- */
             let app_handle = app.handle().clone();

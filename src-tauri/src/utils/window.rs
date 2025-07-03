@@ -9,10 +9,10 @@ pub fn open_reader_window(app_handle: &AppHandle) -> Result<(), String> {
         window.set_focus().unwrap();
     } else {
         let always_on_top =
-            get_from_app_store::<bool>(app_handle, AppStoreKey::AlwaysOnTop)?.unwrap_or(false);
+            get_from_app_store::<bool>(app_handle, AppStoreKey::AlwaysOnTop).unwrap_or(false);
 
         let transparent =
-            get_from_app_store::<bool>(app_handle, AppStoreKey::Transparent)?.unwrap_or(true);
+            get_from_app_store::<bool>(app_handle, AppStoreKey::Transparent).unwrap_or(true);
 
         WebviewWindowBuilder::new(app_handle, "reader", WebviewUrl::default())
             .min_inner_size(200.0, 50.0)

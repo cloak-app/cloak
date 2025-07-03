@@ -1,11 +1,11 @@
 use crate::db::model::Novel;
 use crate::db::Db;
 use crate::state::model::AppState;
+use crate::store::get_from_app_store;
 use crate::store::model::AppStoreKey;
-use crate::store::{delete_from_app_store, get_from_app_store, set_to_app_store};
-use crate::utils::novel::{delete_novel_from_db, get_novel_by_id};
 use crate::utils::reader::NovelReader;
-use std::fs::{copy, remove_file};
+use crate::utils::sql;
+use std::fs;
 use std::path::Path;
 use std::sync::Mutex;
 use tauri::{Emitter, Manager};
@@ -20,62 +20,59 @@ pub async fn add_novel(
 
     // 校验文件是否存在
     if !filepath.exists() {
-        return Err("File does not exist".to_string());
+        return Err(format!("文件不存在: {path}"));
     }
 
-    let filename = filepath.file_name().unwrap().to_str().unwrap();
+    let filename = filepath
+        .file_name()
+        .and_then(|name| name.to_str())
+        .ok_or_else(|| format!("无法获取文件名: {path}"))?;
 
     // 校验文件后缀名为 .txt
     if !filename.ends_with(".txt") {
-        return Err("File must have a `.txt` extension".to_string());
+        return Err(format!("文件格式不支持: {filename}"));
     }
 
     // 将文件复制到应用程序目录
     let app_data_dir = app_handle
         .path()
         .app_data_dir()
-        .expect("failed to get data_dir");
+        .map_err(|e| e.to_string())?;
 
-    let mut new_path = app_data_dir.clone();
-    new_path.push(filename);
+    let new_path = app_data_dir.join(filename);
 
-    copy(path, &new_path).map_err(|e| format!("Error copying file: {}", e))?;
+    fs::copy(path, &new_path).map_err(|e| e.to_string())?;
 
-    let title = filename.split(".").next().expect("Invalid filename");
-    let new_path_str = new_path.to_str().expect("Invalid file path");
+    let title = match filename.split(".").next() {
+        Some(v) => v,
+        None => return Err(format!("非法文件名: {filename}")),
+    };
+
+    let new_path_str = match new_path.to_str() {
+        Some(v) => v,
+        None => return Err(format!("文件路径转换失败: {new_path:?}")),
+    };
+
     let file_size = filepath
         .metadata()
         .map(|metadata| metadata.len())
-        .map_err(|e| format!("Error getting file metadata: {}", e))?;
+        .map_err(|e| e.to_string())?;
 
-    sqlx::query(
-        "INSERT INTO novel (title, path, read_position, read_progress, file_size) VALUES (?1, ?2, ?3, ?4, ?5)",
-    )
-    .bind(title)
-    .bind(new_path_str)
-    .bind(0)
-    .bind(0)
-    .bind(file_size as i64)
-    .execute(&*db)
-    .await
-    .map_err(|e| format!("Error executing query: {}", e))?;
+    sql::add_novel(&db, title, new_path_str, file_size as i64).await?;
 
     Ok(())
 }
 
 #[tauri::command]
 pub async fn get_novel_list(db: tauri::State<'_, Db>) -> Result<Vec<Novel>, String> {
-    let novels = sqlx::query_as::<_, Novel>("SELECT * FROM novel")
-        .fetch_all(&*db)
-        .await
-        .map_err(|e| format!("Error fetching novels: {}", e))?;
+    let novels = sql::get_novel_list(&db).await?;
 
     Ok(novels)
 }
 
 #[tauri::command]
 pub async fn get_novel_detail(db: tauri::State<'_, Db>, id: i64) -> Result<Novel, String> {
-    let novel = get_novel_by_id(&*db, id).await?;
+    let novel = sql::get_novel_by_id(&db, id).await?;
 
     Ok(novel)
 }
@@ -87,10 +84,9 @@ pub async fn open_novel(
     state: tauri::State<'_, Mutex<AppState>>,
     id: i64,
 ) -> Result<(), String> {
-    let novel = get_novel_by_id(&*db, id).await?;
-    let line_size = get_from_app_store::<usize>(&app_handle, AppStoreKey::LineSize)?.unwrap_or(50);
-
-    set_to_app_store(&app_handle, AppStoreKey::LastReadNovelId, novel.id)?;
+    let novel = sql::get_novel_by_id(&db, id).await?;
+    sql::open_novel(&db, id).await?;
+    let line_size = get_from_app_store::<usize>(&app_handle, AppStoreKey::LineSize).unwrap_or(50);
 
     // 创建 reader 并更新状态
     let reader = NovelReader::new(
@@ -109,29 +105,41 @@ pub async fn open_novel(
 }
 
 #[tauri::command]
+pub async fn close_novel(
+    db: tauri::State<'_, Db>,
+    state: tauri::State<'_, Mutex<AppState>>,
+    id: i64,
+) -> Result<(), String> {
+    sql::close_novel(&db, id).await?;
+
+    let mut state = state.lock().map_err(|e| e.to_string())?;
+    state.novel_reader = None;
+
+    Ok(())
+}
+
+#[tauri::command]
 pub async fn delete_novel(
     app_handle: tauri::AppHandle,
     db: tauri::State<'_, Db>,
     state: tauri::State<'_, Mutex<AppState>>,
     id: i64,
 ) -> Result<(), String> {
-    let novel = get_novel_by_id(&*db, id).await?;
+    let novel = sql::get_novel_by_id(&db, id).await?;
 
     let filepath = Path::new(&novel.path);
 
     if filepath.exists() {
-        remove_file(filepath).map_err(|e| format!("Error deleting file: {}", e))?;
+        fs::remove_file(filepath).map_err(|e| e.to_string())?;
     }
 
-    delete_novel_from_db(&*db, id).await?;
+    sql::delete_novel(&db, id).await?;
 
-    // 如果删除的是正在阅读的小说，则关闭对应阅读器，并重置上次阅读的小说
     let mut state = state.lock().map_err(|e| e.to_string())?;
 
     if let Some(reader) = &state.novel_reader {
         if reader.novel_id == id {
             state.novel_reader = None;
-            delete_from_app_store(&app_handle, AppStoreKey::LastReadNovelId)?;
         }
     }
 

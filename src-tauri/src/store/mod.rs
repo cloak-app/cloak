@@ -9,6 +9,7 @@ const DEFAULT_PREV_LINE_SHORTCUT: &str = "Control+Alt+ArrowLeft";
 const DEFAULT_NEXT_CHAPTER_SHORTCUT: &str = "Control+Alt+ArrowDown";
 const DEFAULT_PREV_CHAPTER_SHORTCUT: &str = "Control+Alt+ArrowUp";
 const DEFAULT_BOSS_KEY_SHORTCUT: &str = "Control+Alt+Enter";
+const DEFAULT_TOGGLE_READING_MODE_SHORTCUT: &str = "Control+Alt+Space";
 
 pub fn reset_app_store(app_handle: &AppHandle) -> Result<(), String> {
     let store = app_handle
@@ -44,6 +45,10 @@ pub fn reset_app_store(app_handle: &AppHandle) -> Result<(), String> {
         AppStoreKey::BossKeyShortcut.as_str(),
         DEFAULT_BOSS_KEY_SHORTCUT,
     );
+    store.set(
+        AppStoreKey::ToggleReadingModeShortcut.as_str(),
+        DEFAULT_TOGGLE_READING_MODE_SHORTCUT,
+    );
 
     store.save().unwrap();
 
@@ -65,18 +70,15 @@ pub fn init_app_store(app_handle: &AppHandle) -> Result<(), String> {
 pub fn get_from_app_store<T: serde::de::DeserializeOwned>(
     app_handle: &AppHandle,
     key: AppStoreKey,
-) -> Result<Option<T>, String> {
-    let store = app_handle
-        .store("app_data.json")
-        .map_err(|e| e.to_string())?;
+) -> Option<T> {
+    if let Ok(store) = app_handle.store("app_data.json") {
+        let json_value = store.get(key.as_str())?;
+        if let Ok(value) = serde_json::from_value(json_value) {
+            return Some(value);
+        }
+    }
 
-    let value = store
-        .get(key.as_str())
-        .map(|v| serde_json::from_value(v.clone()))
-        .transpose()
-        .map_err(|e| e.to_string())?;
-
-    Ok(value)
+    None
 }
 
 pub fn set_to_app_store<T: serde::Serialize>(
@@ -90,18 +92,7 @@ pub fn set_to_app_store<T: serde::Serialize>(
 
     let json_value = serde_json::to_value(value).map_err(|e| e.to_string())?;
     store.set(key.as_str(), json_value);
-    store.save().unwrap();
-
-    Ok(())
-}
-
-pub fn delete_from_app_store(app_handle: &AppHandle, key: AppStoreKey) -> Result<(), String> {
-    let store = app_handle
-        .store("app_data.json")
-        .map_err(|e| e.to_string())?;
-
-    store.delete(key.as_str());
-    store.save().unwrap();
+    store.save().map_err(|e| e.to_string())?;
 
     Ok(())
 }

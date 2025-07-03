@@ -2,9 +2,9 @@ use crate::db::Db;
 use crate::state::model::AppState;
 use crate::store::model::AppStoreKey;
 use crate::store::{reset_app_store, set_to_app_store};
-use crate::utils::novel::save_novel;
 use crate::utils::reader::NovelReader;
-use crate::utils::shortcut::AppShortcut;
+use crate::utils::shortcut::{self, AppShortcut};
+use crate::utils::sql;
 use serde_json::Value;
 use std::sync::Mutex;
 use tauri::{Emitter, Manager};
@@ -102,7 +102,7 @@ pub async fn set_line_size(
         )
     };
 
-    save_novel(&*db, novel_id, read_position, read_progress).await?;
+    sql::save_novel(&db, novel_id, read_position, read_progress).await?;
 
     app_handle.emit("reader-change", 0).unwrap();
 
@@ -196,8 +196,21 @@ pub fn set_boss_key_shortcut(app_handle: tauri::AppHandle, shortcut: String) -> 
 }
 
 #[tauri::command]
+pub fn set_toggle_reading_mode_shortcut(
+    app_handle: tauri::AppHandle,
+    shortcut: String,
+) -> Result<(), String> {
+    set_to_app_store(
+        &app_handle,
+        AppStoreKey::ToggleReadingModeShortcut,
+        &shortcut,
+    )?;
+    Ok(())
+}
+
+#[tauri::command]
 pub fn unregister_all_shortcuts(app_handle: tauri::AppHandle) -> Result<(), String> {
-    AppShortcut::unregister_all_shortcuts(&app_handle)?;
+    shortcut::unregister_all_shortcuts(&app_handle)?;
     Ok(())
 }
 
@@ -210,12 +223,12 @@ pub fn activate_all_shortcuts(
     let reading_mode = state.reading_mode;
 
     let shortcuts = if reading_mode {
-        AppShortcut::get_all_shortcuts()
+        AppShortcut::all_shortcuts()
     } else {
-        AppShortcut::get_common_shortcuts()
+        AppShortcut::common_shortcuts()
     };
 
-    AppShortcut::activate_shortcuts(&app_handle, shortcuts)?;
+    shortcut::activate_shortcuts(&app_handle, shortcuts)?;
 
     Ok(())
 }
@@ -228,18 +241,18 @@ pub fn reset_config(
 ) -> Result<(), String> {
     reset_app_store(&app_handle)?;
 
-    AppShortcut::unregister_all_shortcuts(&app_handle)?;
+    shortcut::unregister_all_shortcuts(&app_handle)?;
 
     let state = state.lock().map_err(|e| e.to_string())?;
     let reading_mode = state.reading_mode;
 
     let shortcuts = if reading_mode {
-        AppShortcut::get_all_shortcuts()
+        AppShortcut::all_shortcuts()
     } else {
-        AppShortcut::get_common_shortcuts()
+        AppShortcut::common_shortcuts()
     };
 
-    AppShortcut::activate_shortcuts(&app_handle, shortcuts)?;
+    shortcut::activate_shortcuts(&app_handle, shortcuts)?;
 
     app_handle.emit("config-change", 0).unwrap();
     Ok(())

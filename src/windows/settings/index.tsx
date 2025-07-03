@@ -13,7 +13,7 @@ export default function SettingsWindow() {
       />
 
       <Tabs defaultValue="current" className="p-6 flex-1 flex space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-3 after:">
           <TabsTrigger value="current" className="flex items-center gap-2">
             <BookOpen className="h-4 w-4" />
             当前阅读
@@ -38,6 +38,7 @@ export default function SettingsWindow() {
           <TabsContent value="settings" className="space-y-6">
             <SettingsTab />
           </TabsContent>
+          <div className="bg-white pointer-events-none sticky bottom-0 flex h-40 [mask-image:linear-gradient(transparent,#000000)]" />
         </ScrollArea>
       </Tabs>
     </div>

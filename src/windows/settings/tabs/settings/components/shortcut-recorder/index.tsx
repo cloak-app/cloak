@@ -60,14 +60,16 @@ const ShortcutRecorder: React.FC<ShortcutRecorderProps> = (props) => {
     }
   }, [pressedKeys, currentKeys, isEditing, onChange]);
 
-  useEventListener('blur', () => {
+  const handleBlur = () => {
     if (isEditing) {
       setIsEditing(false);
       setCurrentKeys([]);
       setPressedKeys([]);
       invoke('activate_all_shortcuts');
     }
-  });
+  };
+
+  useEventListener('blur', handleBlur);
 
   const handleStart = async () => {
     invoke('unregister_all_shortcuts');
@@ -90,6 +92,7 @@ const ShortcutRecorder: React.FC<ShortcutRecorderProps> = (props) => {
       className="w-full text-center"
       readOnly
       onFocus={handleStart}
+      onBlur={handleBlur}
       onKeyDown={handleKeyDown}
       onKeyUp={handleKeyUp}
       value={formatValueString()}

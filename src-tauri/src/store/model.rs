@@ -1,6 +1,5 @@
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum AppStoreKey {
-    LastReadNovelId,
     DockVisibility,
     AlwaysOnTop,
     Transparent,
@@ -16,12 +15,12 @@ pub enum AppStoreKey {
     NextChapterShortcut,
     PrevChapterShortcut,
     BossKeyShortcut,
+    ToggleReadingModeShortcut,
 }
 
 impl AppStoreKey {
     pub fn as_str(&self) -> &str {
         match self {
-            AppStoreKey::LastReadNovelId => "last_read_novel_id",
             AppStoreKey::DockVisibility => "dock_visibility",
             AppStoreKey::AlwaysOnTop => "always_on_top",
             AppStoreKey::Transparent => "transparent",
@@ -37,6 +36,7 @@ impl AppStoreKey {
             AppStoreKey::NextChapterShortcut => "next_chapter_shortcut",
             AppStoreKey::PrevChapterShortcut => "prev_chapter_shortcut",
             AppStoreKey::BossKeyShortcut => "boss_key_shortcut",
+            AppStoreKey::ToggleReadingModeShortcut => "toggle_reading_mode_shortcut",
         }
     }
 }

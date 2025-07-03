@@ -41,11 +41,6 @@ const formSchema = z.object({
   dock_visibility: z.boolean(),
   always_on_top: z.boolean(),
   transparent: z.boolean(),
-  next_line_shortcut: z.string(),
-  prev_line_shortcut: z.string(),
-  next_chapter_shortcut: z.string(),
-  prev_chapter_shortcut: z.string(),
-  boss_key_shortcut: z.string(),
   line_size: z.coerce.number(),
   font_size: z.coerce.number(),
   font_family: z.string(),
@@ -53,6 +48,12 @@ const formSchema = z.object({
   font_weight: z.string(),
   font_color: z.string(),
   letter_spacing: z.coerce.number(),
+  next_line_shortcut: z.string(),
+  prev_line_shortcut: z.string(),
+  next_chapter_shortcut: z.string(),
+  prev_chapter_shortcut: z.string(),
+  boss_key_shortcut: z.string(),
+  toggle_reading_mode_shortcut: z.string(),
 });
 
 const Settings: React.FC = () => {
@@ -66,6 +67,8 @@ const Settings: React.FC = () => {
 
   useFormWatch(form, 'dock_visibility', (dockVisibility) => {
     if (loading) return;
+    console.log('run');
+
     invoke('set_dock_visibility', { dockVisibility });
   });
 
@@ -86,31 +89,6 @@ const Settings: React.FC = () => {
         onClick: () => relaunch(),
       },
     });
-  });
-
-  useFormWatch(form, 'next_line_shortcut', (shortcut) => {
-    if (loading) return;
-    invoke('set_next_line_shortcut', { shortcut });
-  });
-
-  useFormWatch(form, 'prev_line_shortcut', (shortcut) => {
-    if (loading) return;
-    invoke('set_prev_line_shortcut', { shortcut });
-  });
-
-  useFormWatch(form, 'next_chapter_shortcut', (shortcut) => {
-    if (loading) return;
-    invoke('set_next_chapter_shortcut', { shortcut });
-  });
-
-  useFormWatch(form, 'prev_chapter_shortcut', (shortcut) => {
-    if (loading) return;
-    invoke('set_prev_chapter_shortcut', { shortcut });
-  });
-
-  useFormWatch(form, 'boss_key_shortcut', (shortcut) => {
-    if (loading) return;
-    invoke('set_boss_key_shortcut', { shortcut });
   });
 
   useFormWatch(form, 'line_size', async (lineSize) => {
@@ -159,6 +137,36 @@ const Settings: React.FC = () => {
   useFormWatch(form, 'line_height', (lineHeight) => {
     if (loading) return;
     invoke('set_line_height', { lineHeight: Number(lineHeight) });
+  });
+
+  useFormWatch(form, 'next_line_shortcut', (shortcut) => {
+    if (loading) return;
+    invoke('set_next_line_shortcut', { shortcut });
+  });
+
+  useFormWatch(form, 'prev_line_shortcut', (shortcut) => {
+    if (loading) return;
+    invoke('set_prev_line_shortcut', { shortcut });
+  });
+
+  useFormWatch(form, 'next_chapter_shortcut', (shortcut) => {
+    if (loading) return;
+    invoke('set_next_chapter_shortcut', { shortcut });
+  });
+
+  useFormWatch(form, 'prev_chapter_shortcut', (shortcut) => {
+    if (loading) return;
+    invoke('set_prev_chapter_shortcut', { shortcut });
+  });
+
+  useFormWatch(form, 'boss_key_shortcut', (shortcut) => {
+    if (loading) return;
+    invoke('set_boss_key_shortcut', { shortcut });
+  });
+
+  useFormWatch(form, 'toggle_reading_mode_shortcut', (shortcut) => {
+    if (loading) return;
+    invoke('set_toggle_reading_mode_shortcut', { shortcut });
   });
 
   const handleReset = async () => {
@@ -394,6 +402,22 @@ const Settings: React.FC = () => {
               render={({ field: { value, onChange, ...rest } }) => (
                 <div className="space-y-2">
                   <FormLabel>老板键</FormLabel>
+                  <FormControl>
+                    <ShortcutRecorder
+                      value={value}
+                      onChange={onChange}
+                      {...rest}
+                    />
+                  </FormControl>
+                </div>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="toggle_reading_mode_shortcut"
+              render={({ field: { value, onChange, ...rest } }) => (
+                <div className="space-y-2">
+                  <FormLabel>切换阅读模式</FormLabel>
                   <FormControl>
                     <ShortcutRecorder
                       value={value}

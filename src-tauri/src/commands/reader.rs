@@ -1,7 +1,7 @@
 use crate::db::Db;
 use crate::state::model::AppState;
-use crate::utils::novel::save_novel;
 use crate::utils::reader::NovelReader;
+use crate::utils::sql;
 use std::sync::Mutex;
 use tauri::Emitter;
 
@@ -73,7 +73,7 @@ pub async fn set_read_position(
         }
     };
 
-    save_novel(&*db, novel_id, read_position, read_progress).await?;
+    sql::save_novel(&db, novel_id, read_position, read_progress).await?;
 
     Ok(())
 }
@@ -103,7 +103,7 @@ pub async fn next_line(
         }
     };
 
-    save_novel(&*db, novel_id, read_position, read_progress).await?;
+    sql::save_novel(&db, novel_id, read_position, read_progress).await?;
 
     Ok(())
 }
@@ -133,7 +133,7 @@ pub async fn prev_line(
         }
     };
 
-    save_novel(&*db, novel_id, read_position, read_progress).await?;
+    sql::save_novel(&db, novel_id, read_position, read_progress).await?;
 
     Ok(())
 }
@@ -163,7 +163,7 @@ pub async fn next_chapter(
         }
     };
 
-    save_novel(&*db, novel_id, read_position, read_progress).await?;
+    sql::save_novel(&db, novel_id, read_position, read_progress).await?;
 
     Ok(())
 }
@@ -193,7 +193,7 @@ pub async fn prev_chapter(
         }
     };
 
-    save_novel(&*db, novel_id, read_position, read_progress).await?;
+    sql::save_novel(&db, novel_id, read_position, read_progress).await?;
 
     Ok(())
 }
