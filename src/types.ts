@@ -32,6 +32,8 @@ export interface Reader {
   read_position: number;
   /** 阅读进度 */
   read_progress: number;
+  /** 总行数 */
+  total_lines: number;
 }
 
 export interface Chapter {

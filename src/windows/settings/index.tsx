@@ -1,15 +1,12 @@
 import { BookOpen, Heart, Settings } from 'lucide-react';
 import { CurrentTab, LibraryTab, SettingsTab } from './tabs';
-import { WindowTitleBar } from '@/components/titlebar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ScrollMask } from '@/components/ui/scroll-mask';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function SettingsWindow() {
   return (
-    <div className="h-full flex flex-col">
-      <WindowTitleBar className="active:shadow-sm" data-tauri-drag-region />
-
+    <div className="h-screen flex flex-col overflow-hidden">
       <Tabs defaultValue="current" className="p-6 flex-1 h-0 flex space-y-6">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="current" className="flex items-center gap-2">

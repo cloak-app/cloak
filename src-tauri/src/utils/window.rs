@@ -35,9 +35,6 @@ pub fn open_settings_window(app_handle: &AppHandle) -> Result<(), String> {
     } else {
         WebviewWindowBuilder::new(app_handle, "settings", WebviewUrl::default())
             .min_inner_size(800.0, 600.0)
-            .decorations(false)
-            .shadow(false)
-            .transparent(true)
             .build()
             .unwrap();
     }

@@ -2,26 +2,10 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useRequest } from 'ahooks';
+import { Minus, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { WindowTitleBar } from '@/components/titlebar';
 import { cn } from '@/lib/utils';
 import { Config, Reader } from '@/types';
-
-const Icon = ({ className, ...rest }: any) => {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth="1.5"
-      stroke="currentColor"
-      className={className}
-      {...rest}
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m6-6H6" />
-    </svg>
-  );
-};
 
 export default function ReaderWindow() {
   const {
@@ -87,31 +71,48 @@ export default function ReaderWindow() {
   };
 
   return (
-    <div
-      className={cn(
-        'fixed top-3 bottom-3 left-3 right-3 select-none border border-transparent hover:cursor-default',
-        isFocus && 'border-black/[0.2] dark:border-white/[0.2] bg-white',
-      )}
-    >
-      <WindowTitleBar
+    <>
+      <div
         className={cn(
-          'transition-opacity active:shadow-sm',
-          !isFocus && 'opacity-0',
+          'fixed h-screen w-screen select-none border border-dashed border-transparent overflow-hidden p-1 rounded',
+          isFocus && 'border-black/[0.2] bg-white',
         )}
+        style={computedStyle}
         data-tauri-drag-region
-      />
-      <div className="p-1" style={computedStyle}>
+      >
         {!reader ? <p>请从托盘菜单打开一本小说</p> : null}
         {reader && line ? line : null}
         {reader && reader.read_progress === 100 && !line ? '（已读完）' : null}
+        {isFocus && (
+          <div className="text-center text-sm text-muted-foreground mt-1">
+            <p>{reader?.current_chapter.title}</p>
+            <p>
+              {reader?.read_position}/{reader?.total_lines}(
+              {reader?.read_progress.toFixed(2)}%)
+            </p>
+          </div>
+        )}
       </div>
 
-      <div className={cn('transition-opacity', !isFocus && 'opacity-0')}>
-        <Icon className="absolute h-6 w-6 -top-3 -left-3 text-black" />
-        <Icon className="absolute h-6 w-6 -bottom-3 -left-3 text-black" />
-        <Icon className="absolute h-6 w-6 -top-3 -right-3 text-black" />
-        <Icon className="absolute h-6 w-6 -bottom-3 -right-3 text-black" />
+      <div
+        className={cn(
+          'transition-opacity fixed top-2 right-2 flex gap-1 p-2 rounded-full bg-white/90 backdrop-blur-md shadow-md border border-gray-200',
+          !isFocus && 'opacity-0',
+        )}
+      >
+        <div
+          className="w-5 h-5 bg-yellow-500 hover:bg-yellow-600 text-white rounded-full flex items-center justify-center cursor-pointer"
+          onClick={() => win.minimize()}
+        >
+          <Minus size={10} />
+        </div>
+        <div
+          className="w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center cursor-pointer"
+          onClick={() => win.close()}
+        >
+          <X size={10} />
+        </div>
       </div>
-    </div>
+    </>
   );
 }

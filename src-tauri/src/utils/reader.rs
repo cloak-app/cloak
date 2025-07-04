@@ -25,11 +25,12 @@ impl Serialize for NovelReader {
         S: Serializer,
     {
         use serde::ser::SerializeStruct;
-        let mut state = serializer.serialize_struct("NovelReader", 6)?;
+        let mut state = serializer.serialize_struct("NovelReader", 7)?;
         state.serialize_field("novel_id", &self.novel_id)?;
         state.serialize_field("novel_path", &self.novel_path)?;
         state.serialize_field("chapters", &self.chapters)?;
         state.serialize_field("read_position", &self.read_position)?;
+        state.serialize_field("total_lines", &self.lines.len())?;
         state.serialize_field("current_chapter", &self.current_chapter())?;
         state.serialize_field("read_progress", &self.read_progress())?;
         state.end()

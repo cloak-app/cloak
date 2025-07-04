@@ -152,7 +152,7 @@ pub fn run() {
             )?;
             let open_reader_i =
                 MenuItem::with_id(app, "open_reader", "打开阅读器", true, None::<&str>)?;
-            let settings_i = MenuItem::with_id(app, "settings", "设置", true, None::<&str>)?;
+            let settings_i = MenuItem::with_id(app, "open_settings", "设置", true, None::<&str>)?;
             let quit_i = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
 
             let menu = MenuBuilder::new(app)
@@ -170,17 +170,17 @@ pub fn run() {
                 .icon(default_tray_icon)
                 .menu(&menu)
                 .on_menu_event(move |app_handle, event| match event.id.as_ref() {
-                    "quit" => {
-                        app_handle.exit(0);
-                    }
-                    "settings" => {
-                        open_settings_window(app_handle).expect("打开设置窗口失败");
+                    "toggle_reading_mode" => {
+                        toggle_reading_mode(app_handle).expect("切换阅读模式失败");
                     }
                     "open_reader" => {
                         open_reader_window(app_handle).expect("打开阅读器窗口失败");
                     }
-                    "toggle_reading_mode" => {
-                        toggle_reading_mode(app_handle).expect("切换阅读模式失败");
+                    "open_settings" => {
+                        open_settings_window(app_handle).expect("打开设置窗口失败");
+                    }
+                    "quit" => {
+                        app_handle.exit(0);
                     }
                     _ => unreachable!(),
                 })
