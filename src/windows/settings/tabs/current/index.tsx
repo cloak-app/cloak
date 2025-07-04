@@ -17,7 +17,7 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { Novel, Reader } from '@/types';
 
-const Current: React.FC = () => {
+const CurrentTab: React.FC = () => {
   const [novel, setNovel] = useState<Novel>();
   const [reader, setReader] = useState<Reader>();
 
@@ -90,4 +90,4 @@ const Current: React.FC = () => {
   );
 };
 
-export default Current;
+export default CurrentTab;

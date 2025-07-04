@@ -3,7 +3,15 @@ import { invoke } from '@tauri-apps/api/core';
 import { confirm } from '@tauri-apps/plugin-dialog';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { useRequest } from 'ahooks';
-import { BookOpen, Eye, HelpCircle, Keyboard, Trash2 } from 'lucide-react';
+import {
+  BookOpen,
+  Eye,
+  HelpCircle,
+  Keyboard,
+  Palette,
+  Trash2,
+  TriangleAlert,
+} from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -11,8 +19,12 @@ import ColorPicker from './components/color-picker';
 import FontSelector from './components/font-selector';
 import FontWeightSelector from './components/font-weight-selector';
 import InputWithButton from './components/input-with-button';
+import LanguageSelector from './components/language-selector';
 import ShortcutRecorder from './components/shortcut-recorder';
 import SliderWithAxis from './components/slider-with-axis';
+import ThemeSelector from './components/theme-selector';
+import { formSchema } from './config';
+import { Theme, useTheme } from '@/components/theme-provider';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -28,6 +40,7 @@ import {
   FormField,
   FormLabel,
 } from '@/components/ui/form';
+import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import {
   Tooltip,
@@ -37,32 +50,36 @@ import {
 import { useFormWatch } from '@/hooks/use-form-watch';
 import { Config } from '@/types';
 
-const formSchema = z.object({
-  dock_visibility: z.boolean(),
-  always_on_top: z.boolean(),
-  transparent: z.boolean(),
-  line_size: z.coerce.number(),
-  font_size: z.coerce.number(),
-  font_family: z.string(),
-  line_height: z.coerce.number(),
-  font_weight: z.string(),
-  font_color: z.string(),
-  letter_spacing: z.coerce.number(),
-  next_line_shortcut: z.string(),
-  prev_line_shortcut: z.string(),
-  next_chapter_shortcut: z.string(),
-  prev_chapter_shortcut: z.string(),
-  boss_key_shortcut: z.string(),
-  toggle_reading_mode_shortcut: z.string(),
-});
-
-const Settings: React.FC = () => {
+const SettingsTab: React.FC = () => {
   const { loading, refresh } = useRequest(() => invoke<Config>('get_config'), {
     onSuccess: (data) => form.reset(data),
   });
 
+  const { setTheme } = useTheme();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
+  });
+
+  useFormWatch(form, 'auto_check_update', (autoCheckUpdate) => {
+    if (loading) return;
+    invoke('set_auto_check_update', { autoCheckUpdate });
+  });
+
+  useFormWatch(form, 'auto_start', (autoStart) => {
+    if (loading) return;
+    invoke('set_auto_start', { autoStart });
+  });
+
+  useFormWatch(form, 'language', (language) => {
+    if (loading) return;
+    invoke('set_language', { language });
+  });
+
+  useFormWatch(form, 'theme', (theme) => {
+    if (loading) return;
+    invoke('set_theme', { theme });
+    setTheme(theme as Theme);
   });
 
   useFormWatch(form, 'dock_visibility', (dockVisibility) => {
@@ -223,6 +240,92 @@ const Settings: React.FC = () => {
   return (
     <Form {...form}>
       <form className="space-y-4">
+        {/* 偏好设置 */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Palette size={20} />
+              偏好设置
+            </CardTitle>
+            <CardDescription>自定义应用偏好</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <FormField
+              control={form.control}
+              name="auto_check_update"
+              render={({ field: { value, onChange, ...rest } }) => (
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <FormLabel>自动检查更新</FormLabel>
+                    <FormDescription>
+                      开启后，阅读器将自动检查更新
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={value}
+                      onCheckedChange={onChange}
+                      {...rest}
+                    />
+                  </FormControl>
+                </div>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="auto_start"
+              render={({ field: { value, onChange, ...rest } }) => (
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <FormLabel>开机自动启动</FormLabel>
+                    <FormDescription>
+                      开启后，阅读器将自动在系统启动时启动
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={value}
+                      onCheckedChange={onChange}
+                      {...rest}
+                    />
+                  </FormControl>
+                </div>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="language"
+              render={({ field }) => (
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <FormLabel>语言偏好</FormLabel>
+                    <FormDescription>选择阅读器默认语言</FormDescription>
+                  </div>
+                  <FormControl>
+                    <LanguageSelector {...field} />
+                  </FormControl>
+                </div>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="theme"
+              render={({ field }) => (
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <FormLabel>主题偏好</FormLabel>
+                    <FormDescription>选择阅读器默认主题</FormDescription>
+                  </div>
+                  <FormControl>
+                    <ThemeSelector {...field} />
+                  </FormControl>
+                </div>
+              )}
+            />
+          </CardContent>
+        </Card>
+
+        {/* 窗口设置 */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -396,6 +499,9 @@ const Settings: React.FC = () => {
                 </div>
               )}
             />
+
+            <Separator className="col-span-2" />
+
             <FormField
               control={form.control}
               name="boss_key_shortcut"
@@ -569,8 +675,10 @@ const Settings: React.FC = () => {
               )}
             />
 
+            <Separator className="col-span-2" />
+
             {/* 预览区域 */}
-            <div className="col-span-2 p-4 border rounded-lg bg-muted/30">
+            <div className="col-span-2 p-4 border rounded-lg bg-accent">
               <h4 className="text-sm font-medium mb-2">预览效果</h4>
               <div className="text-justify" style={computedStyle}>
                 这是一段示例文本，用于预览当前的字体设置效果。你可以调整上方的各项参数来查看实时的变化效果。通过这个预览区域，你可以直观地看到字体大小、颜色、间距、粗细等设置对阅读体验的影响。
@@ -581,7 +689,10 @@ const Settings: React.FC = () => {
 
         <Card className="border-destructive/50">
           <CardHeader>
-            <CardTitle className="text-destructive">危险区域</CardTitle>
+            <CardTitle className="text-destructive flex items-center gap-2">
+              <TriangleAlert size={20} />
+              危险区域
+            </CardTitle>
             <CardDescription>不可逆且破坏性操作</CardDescription>
           </CardHeader>
           <CardContent>
@@ -604,4 +715,4 @@ const Settings: React.FC = () => {
   );
 };
 
-export default Settings;
+export default SettingsTab;

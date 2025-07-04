@@ -3,5 +3,5 @@
   "identifier": "settings",
   "description": "Capability for the settings window",
   "windows": ["settings"],
-  "permissions": ["process:allow-restart"]
+  "permissions": ["process:allow-restart", "autostart:default"]
 }

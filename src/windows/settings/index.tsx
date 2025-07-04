@@ -1,5 +1,5 @@
 import { BookOpen, Heart, Settings } from 'lucide-react';
-import { Current, Library, Settings as SettingsTab } from './tabs';
+import { CurrentTab, LibraryTab, SettingsTab } from './tabs';
 import { WindowTitleBar } from '@/components/titlebar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ScrollMask } from '@/components/ui/scroll-mask';
@@ -28,10 +28,10 @@ export default function SettingsWindow() {
 
         <ScrollArea className="flex-1 h-0">
           <TabsContent value="current" className="space-y-6">
-            <Current />
+            <CurrentTab />
           </TabsContent>
           <TabsContent value="library" className="space-y-6">
-            <Library />
+            <LibraryTab />
           </TabsContent>
           <TabsContent value="settings" className="space-y-6">
             <SettingsTab />

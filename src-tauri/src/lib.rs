@@ -14,12 +14,11 @@ use crate::utils::icon::*;
 use crate::utils::reader::NovelReader;
 use crate::utils::shortcut;
 use crate::utils::sql;
-use crate::utils::update::update;
 use crate::utils::window::{open_reader_window, open_settings_window, show_all_windows};
 use log::LevelFilter;
 use std::sync::Mutex;
 use tauri::{is_dev, menu::*, tray::TrayIconBuilder, Manager, RunEvent};
-use tauri_plugin_dialog::{DialogExt, MessageDialogButtons, MessageDialogKind};
+use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_log::fern::colors::ColoredLevelConfig;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -32,6 +31,10 @@ pub fn run() {
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_autostart::init(
+            MacosLauncher::LaunchAgent,
+            Some(vec!["--flag1", "--flag2"]),
+        ))
         .plugin(
             tauri_plugin_log::Builder::new()
                 .with_colors(ColoredLevelConfig::default())
@@ -50,14 +53,6 @@ pub fn run() {
 
             if has_show_window {
                 show_all_windows(app_handle).unwrap();
-            } else {
-                app_handle
-                    .dialog()
-                    .message("Cloak 已经在运行中，请从托盘打开窗口")
-                    .kind(MessageDialogKind::Info)
-                    .title("Cloak 正在运行")
-                    .buttons(MessageDialogButtons::OkCustom("我知道了".to_string()))
-                    .show(|_| ());
             }
         }))
         .invoke_handler(tauri::generate_handler![
@@ -75,6 +70,11 @@ pub fn run() {
             reader::set_read_position,
             // 配置相关
             config::get_config,
+            config::reset_config,
+            config::set_auto_check_update,
+            config::set_auto_start,
+            config::set_language,
+            config::set_theme,
             config::set_dock_visibility,
             config::set_always_on_top,
             config::set_transparent,
@@ -85,7 +85,6 @@ pub fn run() {
             config::set_font_weight,
             config::set_font_color,
             config::set_letter_spacing,
-            config::reset_config,
             // 快捷键相关
             config::set_next_line_shortcut,
             config::set_prev_line_shortcut,
@@ -100,6 +99,7 @@ pub fn run() {
             os::get_all_font_families,
             // 窗口相关
             window::open_reader_window,
+            window::open_update_window,
         ])
         .setup(|app| {
             /* -------------------------------- 初始化全局上下文 -------------------------------- */
@@ -187,12 +187,6 @@ pub fn run() {
                 .build(app)?;
 
             app.manage(menu);
-
-            /* ---------------------------------- 检查更新 ---------------------------------- */
-            let app_handle = app.handle().clone();
-            tauri::async_runtime::spawn(async move {
-                update(app_handle).await.unwrap();
-            });
 
             Ok(())
         })

@@ -105,7 +105,7 @@ const ChapterList = (props: ChapterListProps) => {
                   <span
                     className={cn(
                       'text-sm',
-                      !isRead && 'text-muted-foreground',
+                      !isRead ? 'text-muted-foreground' : 'text-foreground',
                     )}
                   >
                     {chapter.title}
@@ -122,7 +122,7 @@ const ChapterList = (props: ChapterListProps) => {
         {isLocateButtonVisible && (
           <div className="absolute bottom-6 right-6 z-999">
             <Button variant="outline" size="icon" onClick={scrollIntoView}>
-              <LocateFixed />
+              <LocateFixed className="text-primary" />
             </Button>
           </div>
         )}

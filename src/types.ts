@@ -41,6 +41,15 @@ export interface Chapter {
 }
 
 export interface Config {
+  /* ---------------------------------- 偏好设置 ---------------------------------- */
+  /** 自动检查更新 */
+  auto_check_update: boolean;
+  /** 自动启动 */
+  auto_start: boolean;
+  /** 语言 */
+  language: string;
+  /** 主题 */
+  theme: string;
   /* ---------------------------------- 系统设置 ---------------------------------- */
   /** 是否显示 Dock 图标 */
   dock_visibility: boolean;

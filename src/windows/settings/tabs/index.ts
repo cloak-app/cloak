@@ -1,3 +1,3 @@
-export { default as Current } from './current';
-export { default as Library } from './library';
-export { default as Settings } from './settings';
+export { default as CurrentTab } from './current';
+export { default as LibraryTab } from './library';
+export { default as SettingsTab } from './settings';

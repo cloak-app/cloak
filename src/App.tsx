@@ -1,5 +1,6 @@
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import React, { useEffect } from 'react';
+import { ThemeProvider } from './components/theme-provider';
 import ReaderWindow from './windows/reader';
 import SettingsWindow from './windows/settings';
 import UpdateWindow from './windows/update';
@@ -22,10 +23,10 @@ const App = () => {
   }, [windowLabel]);
 
   return (
-    <>
+    <ThemeProvider>
       {PAGE[windowLabel]}
       <Toaster position="bottom-right" />
-    </>
+    </ThemeProvider>
   );
 };
 

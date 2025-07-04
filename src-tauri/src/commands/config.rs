@@ -1,35 +1,63 @@
 use crate::db::Db;
 use crate::state::model::AppState;
 use crate::store::model::AppStoreKey;
-use crate::store::{reset_app_store, set_to_app_store};
+use crate::store::{get_entries_from_app_store, reset_app_store, set_to_app_store};
 use crate::utils::reader::NovelReader;
 use crate::utils::shortcut;
 use crate::utils::sql;
 use serde_json::Value;
 use std::sync::Mutex;
 use tauri::{Emitter, Manager};
-use tauri_plugin_store::StoreExt;
+use tauri_plugin_autostart::ManagerExt;
 
-/* ---------------------------------- 基础设置 ---------------------------------- */
-
+/* ---------------------------------- 偏好设置 ---------------------------------- */
 #[tauri::command]
-pub fn get_config(app_handle: tauri::AppHandle) -> Result<Value, String> {
-    let store = app_handle
-        .store("app_data.json")
-        .map_err(|e| e.to_string())?;
+pub fn set_auto_check_update(
+    app_handle: tauri::AppHandle,
+    auto_check_update: bool,
+) -> Result<(), String> {
+    set_to_app_store(&app_handle, AppStoreKey::AutoCheckUpdate, auto_check_update)?;
+    app_handle.emit("reader-change", 0).unwrap();
 
-    // 获取所有键值对
-    let all_entries = store.entries();
-
-    let mut obj = serde_json::Map::new();
-    for (key, value) in all_entries {
-        obj.insert(key, value);
-    }
-    let config = Value::Object(obj);
-
-    Ok(config)
+    Ok(())
 }
 
+#[tauri::command]
+pub fn set_auto_start(app_handle: tauri::AppHandle, auto_start: bool) -> Result<(), String> {
+    set_to_app_store(&app_handle, AppStoreKey::AutoStart, auto_start)?;
+
+    if auto_start {
+        app_handle
+            .autolaunch()
+            .enable()
+            .map_err(|e| e.to_string())?;
+    } else {
+        app_handle
+            .autolaunch()
+            .disable()
+            .map_err(|e| e.to_string())?;
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
+pub fn set_language(app_handle: tauri::AppHandle, language: String) -> Result<(), String> {
+    set_to_app_store(&app_handle, AppStoreKey::Language, language)?;
+    app_handle.emit("reader-change", 0).unwrap();
+
+    Ok(())
+}
+
+#[tauri::command]
+pub fn set_theme(app_handle: tauri::AppHandle, theme: String) -> Result<(), String> {
+    set_to_app_store(&app_handle, AppStoreKey::Theme, theme)?;
+    app_handle.emit("reader-change", 0).unwrap();
+
+    Ok(())
+}
+
+/* ---------------------------------- 基础设置 ---------------------------------- */
 #[tauri::command]
 pub fn set_dock_visibility(
     app_handle: tauri::AppHandle,
@@ -234,6 +262,19 @@ pub fn activate_all_shortcuts(
 }
 
 /* ----------------------------------- 其他 ----------------------------------- */
+#[tauri::command]
+pub fn get_config(app_handle: tauri::AppHandle) -> Result<Value, String> {
+    let all_entries = get_entries_from_app_store(&app_handle)?;
+
+    let mut obj = serde_json::Map::new();
+    for (key, value) in all_entries {
+        obj.insert(key, value);
+    }
+    let config = Value::Object(obj);
+
+    Ok(config)
+}
+
 #[tauri::command]
 pub fn reset_config(
     app_handle: tauri::AppHandle,

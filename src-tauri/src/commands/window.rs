@@ -1,9 +1,15 @@
 use tauri::AppHandle;
 
-use crate::utils;
+use crate::utils::window;
 
 #[tauri::command]
 pub fn open_reader_window(app_handle: AppHandle) -> Result<(), String> {
-    utils::window::open_reader_window(&app_handle)?;
+    window::open_reader_window(&app_handle)?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn open_update_window(app_handle: AppHandle) -> Result<(), String> {
+    window::open_update_window(&app_handle)?;
     Ok(())
 }

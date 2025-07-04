@@ -35,12 +35,10 @@ import {
 } from '@/components/ui/select';
 import { Novel } from '@/types';
 
-const Library: React.FC = () => {
+const LibraryTab: React.FC = () => {
   const { data: novelList, refresh } = useRequest(() =>
     invoke<Novel[]>('get_novel_list'),
   );
-
-  console.log(novelList);
 
   const handleDelete = (id: number) => {
     toast.promise(invoke('delete_novel', { id }), {
@@ -100,17 +98,17 @@ const Library: React.FC = () => {
     <>
       <div className="flex justify-between items-center">
         <div>
-          <h3 className="text-lg font-semibold">我的小说库</h3>
+          <h3 className="text-lg font-semibold text-primary">我的小说库</h3>
           <p className="text-sm text-muted-foreground">
             共 {novelList?.length} 本小说
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="icon" onClick={handleAdd}>
-            <Plus />
+            <Plus className="text-primary" />
           </Button>
           <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="w-32">
+            <SelectTrigger className="w-32 text-primary">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -198,4 +196,4 @@ const Library: React.FC = () => {
   );
 };
 
-export default Library;
+export default LibraryTab;
