@@ -169,6 +169,8 @@ async function main() {
     process.exit(0);
   }
 
+  console.log(`[INFO]: Release v${newVersion} completed.`);
+
   process.exit(0);
 }
 
