@@ -14,7 +14,7 @@
 
 ## 安装
 
-前往 [Release page](https://github.com/Xav1erSue/cloak/releases) 下载对应平台的安装包。
+前往 [Release page](https://github.com/cloak-app/cloak/releases) 下载对应平台的安装包。
 
 ## 功能
 
@@ -52,9 +52,9 @@
 
 ## 报告问题 / 请求功能
 
-项目正在快速迭代中，且并未发布正式版，如果您遇到任何意料之外的错误，请通过 [Issue](https://github.com/Xav1erSue/cloak/issues) 反馈。
+项目正在快速迭代中，且并未发布正式版，如果您遇到任何意料之外的错误，请通过 [Issue](https://github.com/cloak-app/cloak/issues) 反馈。
 
-如果您有关于项目功能的任何建议或想法，也欢迎在 [Issue](https://github.com/Xav1erSue/cloak/issues) 中提出。
+如果您有关于项目功能的任何建议或想法，也欢迎在 [Issue](https://github.com/cloak-app/cloak/issues) 中提出。
 
 ## 捐赠
 

@@ -14,7 +14,7 @@
 
 ## Install
 
-Go to the [Release page](https://github.com/Xav1erSue/cloak/releases) to download the corresponding installation package.
+Go to the [Release page](https://github.com/cloak-app/cloak/releases) to download the corresponding installation package.
 
 ## Features
 
@@ -50,9 +50,9 @@ Go to the [Release page](https://github.com/Xav1erSue/cloak/releases) to downloa
 
 ## Bug Report / Feature Request
 
-This project is in rapid development, if you encounter any unexpected errors, please report them to me by [opening an issue](https://github.com/Xav1erSue/cloak/issues).
+This project is in rapid development, if you encounter any unexpected errors, please report them to me by [opening an issue](https://github.com/cloak-app/cloak/issues).
 
-If you have any suggestions or ideas for the project, please feel free to [open an issue](https://github.com/Xav1erSue/cloak/issues).
+If you have any suggestions or ideas for the project, please feel free to [open an issue](https://github.com/cloak-app/cloak/issues).
 
 ## Donate
 
