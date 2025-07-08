@@ -25,10 +25,7 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "resources": [
-      "icons/tray-icon.ico",
-      "icons/tray-icon-active.ico"
-    ],
+    "resources": ["icons/tray-icon.ico", "icons/tray-icon-active.ico"],
     "createUpdaterArtifacts": true
   },
   "plugins": {

@@ -1,6 +1,12 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import { createContext, useContext, useEffect, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 import { Config } from '@/types';
 
 export type Theme = 'dark' | 'light' | 'system';
@@ -33,23 +39,26 @@ export function ThemeProvider({
     () => (localStorage.getItem(storageKey) as Theme) || defaultTheme,
   );
 
-  useEffect(() => {
+  const handleThemeChange = useCallback((theme: Theme) => {
     const root = window.document.documentElement;
+    const query = window.matchMedia('(prefers-color-scheme: dark)');
+    query.onchange = null;
 
     root.classList.remove('light', 'dark');
 
     if (theme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
-        .matches
-        ? 'dark'
-        : 'light';
-
+      const systemTheme = query.matches ? 'dark' : 'light';
       root.classList.add(systemTheme);
+      query.onchange = () => handleThemeChange(theme);
       return;
     }
 
     root.classList.add(theme);
-  }, [theme]);
+  }, []);
+
+  useEffect(() => {
+    handleThemeChange(theme);
+  }, [theme, handleThemeChange]);
 
   useEffect(() => {
     const listener = listen('config-change', () => {

@@ -2,6 +2,16 @@ use crate::store::get_from_app_store;
 use crate::store::model::AppStoreKey;
 use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindowBuilder};
 
+pub fn destroy_reader_window(app_handle: &AppHandle) -> Result<(), String> {
+    let window = app_handle.get_webview_window("reader");
+
+    if let Some(window) = window {
+        window.close().unwrap();
+    }
+
+    Ok(())
+}
+
 pub fn open_reader_window(app_handle: &AppHandle) -> Result<(), String> {
     let window = app_handle.get_webview_window("reader");
 
@@ -9,10 +19,9 @@ pub fn open_reader_window(app_handle: &AppHandle) -> Result<(), String> {
         window.set_focus().unwrap();
     } else {
         let always_on_top =
-            get_from_app_store::<bool>(app_handle, AppStoreKey::AlwaysOnTop).unwrap_or(false);
+            get_from_app_store::<bool>(app_handle, AppStoreKey::AlwaysOnTop).unwrap();
 
-        let transparent =
-            get_from_app_store::<bool>(app_handle, AppStoreKey::Transparent).unwrap_or(true);
+        let transparent = get_from_app_store::<bool>(app_handle, AppStoreKey::Transparent).unwrap();
 
         WebviewWindowBuilder::new(app_handle, "reader", WebviewUrl::default())
             .min_inner_size(200.0, 50.0)

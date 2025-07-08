@@ -1,7 +1,15 @@
 {
   "identifier": "desktop-capability",
-  "platforms": ["macOS", "windows", "linux"],
-  "windows": ["reader", "settings", "update"],
+  "platforms": [
+    "macOS",
+    "windows",
+    "linux"
+  ],
+  "windows": [
+    "reader",
+    "settings",
+    "update"
+  ],
   "permissions": [
     "core:default",
     "opener:default",
@@ -14,6 +22,7 @@
     "core:window:allow-start-dragging",
     "core:window:allow-close",
     "core:window:allow-minimize",
-    "core:window:allow-toggle-maximize"
+    "core:window:allow-toggle-maximize",
+    "window-state:default"
   ]
 }

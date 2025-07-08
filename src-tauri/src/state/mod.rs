@@ -8,7 +8,7 @@ use tauri::{menu::Menu, AppHandle, Manager, Wry};
 
 pub fn toggle_reading_mode(app_handle: &AppHandle) -> Result<(), String> {
     let state = app_handle.state::<Mutex<AppState>>();
-    let mut state = state.lock().map_err(|e| e.to_string())?;
+    let mut state = state.lock().unwrap();
 
     state.reading_mode = !state.reading_mode;
 

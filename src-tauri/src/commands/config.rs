@@ -12,12 +12,29 @@ use tauri_plugin_autostart::ManagerExt;
 
 /* ---------------------------------- 偏好设置 ---------------------------------- */
 #[tauri::command]
-pub fn set_auto_check_update(
+pub fn get_last_check_update_time(
+    state: tauri::State<'_, Mutex<AppState>>,
+) -> Result<Option<i64>, String> {
+    let state = state.lock().map_err(|e| e.to_string())?;
+
+    Ok(state.update_checker.last_check_time)
+}
+
+#[tauri::command]
+pub fn set_check_update_interval(
     app_handle: tauri::AppHandle,
-    auto_check_update: bool,
+    state: tauri::State<'_, Mutex<AppState>>,
+    interval: u64,
 ) -> Result<(), String> {
-    set_to_app_store(&app_handle, AppStoreKey::AutoCheckUpdate, auto_check_update)?;
-    app_handle.emit("reader-change", 0).unwrap();
+    let mut state = state.lock().map_err(|e| e.to_string())?;
+
+    let update_checker = &mut state.update_checker;
+
+    set_to_app_store(&app_handle, AppStoreKey::CheckUpdateInterval, interval)?;
+
+    update_checker
+        .start(&app_handle, interval)
+        .map_err(|e| e.to_string())?;
 
     Ok(())
 }
@@ -44,16 +61,12 @@ pub fn set_auto_start(app_handle: tauri::AppHandle, auto_start: bool) -> Result<
 #[tauri::command]
 pub fn set_language(app_handle: tauri::AppHandle, language: String) -> Result<(), String> {
     set_to_app_store(&app_handle, AppStoreKey::Language, language)?;
-    app_handle.emit("reader-change", 0).unwrap();
-
     Ok(())
 }
 
 #[tauri::command]
 pub fn set_theme(app_handle: tauri::AppHandle, theme: String) -> Result<(), String> {
     set_to_app_store(&app_handle, AppStoreKey::Theme, theme)?;
-    app_handle.emit("reader-change", 0).unwrap();
-
     Ok(())
 }
 

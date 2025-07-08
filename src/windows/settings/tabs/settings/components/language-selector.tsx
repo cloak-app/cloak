@@ -9,15 +9,18 @@ import {
 } from '@/components/ui/select';
 
 interface LanguageSelectorProps {
+  disabled?: boolean;
   value: string;
   onChange: (value: string) => void;
   defaultValue?: string;
 }
 
 const LanguageSelector: React.FC<LanguageSelectorProps> = (props) => {
+  const { disabled } = props;
   const [value, onChange] = useControllableValue(props);
+
   return (
-    <Select value={value} onValueChange={onChange}>
+    <Select value={value} onValueChange={onChange} disabled={disabled}>
       <SelectTrigger className="relative w-50">
         <div className="flex items-center gap-2">
           <Languages size={20} />

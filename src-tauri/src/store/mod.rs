@@ -39,9 +39,9 @@ pub fn init_app_store(app_handle: &AppHandle) -> Result<(), String> {
     let store_keys = store.keys();
 
     AppStoreKey::keys().iter().for_each(|key| {
-        let key_str = key.as_str();
-        if !store_keys.contains(&key_str) {
-            store.set(&key_str, key.default_value());
+        let key_string = key.as_str().to_string();
+        if !store_keys.contains(&key_string) {
+            store.set(&key_string, key.default_value());
         }
     });
 

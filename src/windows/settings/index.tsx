@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function SettingsWindow() {
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
+    <div className="h-screen flex flex-col overflow-hidden bg-background">
       <Tabs defaultValue="current" className="p-6 flex-1 h-0 flex space-y-6">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="current" className="flex items-center gap-2">

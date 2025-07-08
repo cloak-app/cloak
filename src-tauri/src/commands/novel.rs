@@ -86,7 +86,7 @@ pub async fn open_novel(
 ) -> Result<(), String> {
     let novel = sql::get_novel_by_id(&db, id).await?;
     sql::open_novel(&db, id).await?;
-    let line_size = get_from_app_store::<usize>(&app_handle, AppStoreKey::LineSize).unwrap_or(50);
+    let line_size = get_from_app_store::<usize>(&app_handle, AppStoreKey::LineSize).unwrap();
 
     // 创建 reader 并更新状态
     let reader = NovelReader::new(

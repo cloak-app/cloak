@@ -1,5 +1,19 @@
 use serde_json::{Number, Value};
 
+const DEFAULT_CHECK_UPDATE_INTERVAL: u64 = 28800;
+const DEFAULT_AUTO_START: bool = false;
+const DEFAULT_LANGUAGE: &str = "zh-CN";
+const DEFAULT_THEME: &str = "system";
+const DEFAULT_DOCK_VISIBILITY: bool = true;
+const DEFAULT_ALWAYS_ON_TOP: bool = true;
+const DEFAULT_TRANSPARENT: bool = true;
+const DEFAULT_LINE_SIZE: u32 = 50;
+const DEFAULT_FONT_SIZE: u32 = 16;
+const DEFAULT_FONT_FAMILY: &str = "";
+const DEFAULT_LINE_HEIGHT: f64 = 1.0;
+const DEFAULT_FONT_WEIGHT: u32 = 400;
+const DEFAULT_FONT_COLOR: &str = "#000000";
+const DEFAULT_LETTER_SPACING: f64 = 0.0;
 const DEFAULT_NEXT_LINE_SHORTCUT: &str = "Control+Alt+ArrowRight";
 const DEFAULT_PREV_LINE_SHORTCUT: &str = "Control+Alt+ArrowLeft";
 const DEFAULT_NEXT_CHAPTER_SHORTCUT: &str = "Control+Alt+ArrowDown";
@@ -9,7 +23,7 @@ const DEFAULT_TOGGLE_READING_MODE_SHORTCUT: &str = "Control+Alt+Space";
 
 #[derive(Clone, Copy, Debug)]
 pub enum AppStoreKey {
-    AutoCheckUpdate,
+    CheckUpdateInterval,
     AutoStart,
     Language,
     Theme,
@@ -32,47 +46,53 @@ pub enum AppStoreKey {
 }
 
 impl AppStoreKey {
-    pub fn as_str(&self) -> String {
+    pub fn as_str(&self) -> &str {
         match self {
-            AppStoreKey::AutoCheckUpdate => "auto_check_update".to_string(),
-            AppStoreKey::AutoStart => "auto_start".to_string(),
-            AppStoreKey::Language => "language".to_string(),
-            AppStoreKey::Theme => "theme".to_string(),
-            AppStoreKey::DockVisibility => "dock_visibility".to_string(),
-            AppStoreKey::AlwaysOnTop => "always_on_top".to_string(),
-            AppStoreKey::Transparent => "transparent".to_string(),
-            AppStoreKey::LineSize => "line_size".to_string(),
-            AppStoreKey::FontSize => "font_size".to_string(),
-            AppStoreKey::FontFamily => "font_family".to_string(),
-            AppStoreKey::LineHeight => "line_height".to_string(),
-            AppStoreKey::FontWeight => "font_weight".to_string(),
-            AppStoreKey::FontColor => "font_color".to_string(),
-            AppStoreKey::LetterSpacing => "letter_spacing".to_string(),
-            AppStoreKey::NextLineShortcut => "next_line_shortcut".to_string(),
-            AppStoreKey::PrevLineShortcut => "prev_line_shortcut".to_string(),
-            AppStoreKey::NextChapterShortcut => "next_chapter_shortcut".to_string(),
-            AppStoreKey::PrevChapterShortcut => "prev_chapter_shortcut".to_string(),
-            AppStoreKey::BossKeyShortcut => "boss_key_shortcut".to_string(),
-            AppStoreKey::ToggleReadingModeShortcut => "toggle_reading_mode_shortcut".to_string(),
+            AppStoreKey::CheckUpdateInterval => "check_update_interval",
+            AppStoreKey::AutoStart => "auto_start",
+            AppStoreKey::Language => "language",
+            AppStoreKey::Theme => "theme",
+            AppStoreKey::DockVisibility => "dock_visibility",
+            AppStoreKey::AlwaysOnTop => "always_on_top",
+            AppStoreKey::Transparent => "transparent",
+            AppStoreKey::LineSize => "line_size",
+            AppStoreKey::FontSize => "font_size",
+            AppStoreKey::FontFamily => "font_family",
+            AppStoreKey::LineHeight => "line_height",
+            AppStoreKey::FontWeight => "font_weight",
+            AppStoreKey::FontColor => "font_color",
+            AppStoreKey::LetterSpacing => "letter_spacing",
+            AppStoreKey::NextLineShortcut => "next_line_shortcut",
+            AppStoreKey::PrevLineShortcut => "prev_line_shortcut",
+            AppStoreKey::NextChapterShortcut => "next_chapter_shortcut",
+            AppStoreKey::PrevChapterShortcut => "prev_chapter_shortcut",
+            AppStoreKey::BossKeyShortcut => "boss_key_shortcut",
+            AppStoreKey::ToggleReadingModeShortcut => "toggle_reading_mode_shortcut",
         }
     }
 
     pub fn default_value(&self) -> Value {
         match self {
-            AppStoreKey::AutoCheckUpdate => Value::Bool(true),
-            AppStoreKey::AutoStart => Value::Bool(false),
-            AppStoreKey::Language => Value::String("zh-CN".to_string()),
-            AppStoreKey::Theme => Value::String("system".to_string()),
-            AppStoreKey::DockVisibility => Value::Bool(true),
-            AppStoreKey::AlwaysOnTop => Value::Bool(true),
-            AppStoreKey::Transparent => Value::Bool(true),
-            AppStoreKey::LineSize => Value::Number(Number::from(50)),
-            AppStoreKey::FontSize => Value::Number(Number::from(16)),
-            AppStoreKey::FontFamily => Value::String("".to_string()),
-            AppStoreKey::LineHeight => Value::Number(Number::from_f64(1.0).unwrap()),
-            AppStoreKey::FontWeight => Value::Number(Number::from(400)),
-            AppStoreKey::FontColor => Value::String("#000000".to_string()),
-            AppStoreKey::LetterSpacing => Value::Number(Number::from_f64(0.0).unwrap()),
+            AppStoreKey::CheckUpdateInterval => {
+                Value::Number(Number::from(DEFAULT_CHECK_UPDATE_INTERVAL))
+            }
+            AppStoreKey::AutoStart => Value::Bool(DEFAULT_AUTO_START),
+            AppStoreKey::Language => Value::String(DEFAULT_LANGUAGE.to_string()),
+            AppStoreKey::Theme => Value::String(DEFAULT_THEME.to_string()),
+            AppStoreKey::DockVisibility => Value::Bool(DEFAULT_DOCK_VISIBILITY),
+            AppStoreKey::AlwaysOnTop => Value::Bool(DEFAULT_ALWAYS_ON_TOP),
+            AppStoreKey::Transparent => Value::Bool(DEFAULT_TRANSPARENT),
+            AppStoreKey::LineSize => Value::Number(Number::from(DEFAULT_LINE_SIZE)),
+            AppStoreKey::FontSize => Value::Number(Number::from(DEFAULT_FONT_SIZE)),
+            AppStoreKey::FontFamily => Value::String(DEFAULT_FONT_FAMILY.to_string()),
+            AppStoreKey::LineHeight => {
+                Value::Number(Number::from_f64(DEFAULT_LINE_HEIGHT).unwrap())
+            }
+            AppStoreKey::FontWeight => Value::Number(Number::from(DEFAULT_FONT_WEIGHT)),
+            AppStoreKey::FontColor => Value::String(DEFAULT_FONT_COLOR.to_string()),
+            AppStoreKey::LetterSpacing => {
+                Value::Number(Number::from_f64(DEFAULT_LETTER_SPACING).unwrap())
+            }
             AppStoreKey::NextLineShortcut => Value::String(DEFAULT_NEXT_LINE_SHORTCUT.to_string()),
             AppStoreKey::PrevLineShortcut => Value::String(DEFAULT_PREV_LINE_SHORTCUT.to_string()),
             AppStoreKey::NextChapterShortcut => {
@@ -90,7 +110,7 @@ impl AppStoreKey {
 
     pub fn keys() -> Vec<AppStoreKey> {
         vec![
-            AppStoreKey::AutoCheckUpdate,
+            AppStoreKey::CheckUpdateInterval,
             AppStoreKey::AutoStart,
             AppStoreKey::Language,
             AppStoreKey::Theme,

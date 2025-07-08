@@ -3,6 +3,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { confirm } from '@tauri-apps/plugin-dialog';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { useRequest } from 'ahooks';
+import dayjs from 'dayjs';
 import {
   BookOpen,
   Eye,
@@ -23,6 +24,7 @@ import LanguageSelector from './components/language-selector';
 import ShortcutRecorder from './components/shortcut-recorder';
 import SliderWithAxis from './components/slider-with-axis';
 import ThemeSelector from './components/theme-selector';
+import UpdateIntervalSelector from './components/update-interval-selector';
 import { formSchema } from './config';
 import { Theme, useTheme } from '@/components/theme-provider';
 import { Button } from '@/components/ui/button';
@@ -38,6 +40,7 @@ import {
   FormControl,
   FormDescription,
   FormField,
+  FormItem,
   FormLabel,
 } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
@@ -55,15 +58,20 @@ const SettingsTab: React.FC = () => {
     onSuccess: (data) => form.reset(data),
   });
 
+  const { data: lastUpdateTime, refresh: refreshLastUpdateTime } = useRequest(
+    () => invoke<number>('get_last_check_update_time'),
+  );
+
   const { setTheme } = useTheme();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
   });
 
-  useFormWatch(form, 'auto_check_update', (autoCheckUpdate) => {
+  useFormWatch(form, 'check_update_interval', async (interval) => {
     if (loading) return;
-    invoke('set_auto_check_update', { autoCheckUpdate });
+    await invoke('set_check_update_interval', { interval });
+    refreshLastUpdateTime();
   });
 
   useFormWatch(form, 'auto_start', (autoStart) => {
@@ -103,7 +111,7 @@ const SettingsTab: React.FC = () => {
       duration: Infinity,
       action: {
         label: '立即重启',
-        onClick: () => relaunch(),
+        onClick: () => invoke('reopen_reader_window'),
       },
     });
   });
@@ -237,6 +245,18 @@ const SettingsTab: React.FC = () => {
     letterSpacing: `${letterSpacing}px`,
   };
 
+  const getLastUpdateTime = (interval: number) => {
+    if (interval === 0) {
+      return '自动更新已关闭';
+    }
+
+    if (lastUpdateTime) {
+      return `上次检查更新时间：${dayjs.unix(lastUpdateTime || 0).fromNow()}`;
+    }
+
+    return '暂未检查更新';
+  };
+
   return (
     <Form {...form}>
       <form className="space-y-4">
@@ -252,30 +272,39 @@ const SettingsTab: React.FC = () => {
           <CardContent className="space-y-4">
             <FormField
               control={form.control}
-              name="auto_check_update"
-              render={({ field: { value, onChange, ...rest } }) => (
-                <div className="flex items-center justify-between">
+              name="check_update_interval"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between">
                   <div className="space-y-1">
-                    <FormLabel>自动检查更新</FormLabel>
+                    <FormLabel>
+                      自动检查更新
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <HelpCircle
+                            size={14}
+                            className="text-muted-foreground"
+                          />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          修改检查间隔后会立即检查更新一次
+                        </TooltipContent>
+                      </Tooltip>
+                    </FormLabel>
                     <FormDescription>
-                      开启后，阅读器将自动检查更新
+                      {getLastUpdateTime(field.value)}
                     </FormDescription>
                   </div>
                   <FormControl>
-                    <Switch
-                      checked={value}
-                      onCheckedChange={onChange}
-                      {...rest}
-                    />
+                    <UpdateIntervalSelector {...field} />
                   </FormControl>
-                </div>
+                </FormItem>
               )}
             />
             <FormField
               control={form.control}
               name="auto_start"
               render={({ field: { value, onChange, ...rest } }) => (
-                <div className="flex items-center justify-between">
+                <FormItem className="flex items-center justify-between">
                   <div className="space-y-1">
                     <FormLabel>开机自动启动</FormLabel>
                     <FormDescription>
@@ -289,14 +318,14 @@ const SettingsTab: React.FC = () => {
                       {...rest}
                     />
                   </FormControl>
-                </div>
+                </FormItem>
               )}
             />
             <FormField
               control={form.control}
               name="language"
               render={({ field }) => (
-                <div className="flex items-center justify-between">
+                <FormItem className="flex items-center justify-between">
                   <div className="space-y-1">
                     <FormLabel>语言偏好</FormLabel>
                     <FormDescription>选择阅读器默认语言</FormDescription>
@@ -304,14 +333,14 @@ const SettingsTab: React.FC = () => {
                   <FormControl>
                     <LanguageSelector {...field} />
                   </FormControl>
-                </div>
+                </FormItem>
               )}
             />
             <FormField
               control={form.control}
               name="theme"
               render={({ field }) => (
-                <div className="flex items-center justify-between">
+                <FormItem className="flex items-center justify-between">
                   <div className="space-y-1">
                     <FormLabel>主题偏好</FormLabel>
                     <FormDescription>选择阅读器默认主题</FormDescription>
@@ -319,7 +348,7 @@ const SettingsTab: React.FC = () => {
                   <FormControl>
                     <ThemeSelector {...field} />
                   </FormControl>
-                </div>
+                </FormItem>
               )}
             />
           </CardContent>
@@ -339,7 +368,7 @@ const SettingsTab: React.FC = () => {
               control={form.control}
               name="dock_visibility"
               render={({ field: { value, onChange, ...rest } }) => (
-                <div className="flex items-center justify-between">
+                <FormItem className="flex items-center justify-between">
                   <div className="space-y-1">
                     <FormLabel>
                       是否显示 Dock 图标
@@ -364,14 +393,14 @@ const SettingsTab: React.FC = () => {
                       {...rest}
                     />
                   </FormControl>
-                </div>
+                </FormItem>
               )}
             />
             <FormField
               control={form.control}
               name="always_on_top"
               render={({ field: { value, onChange, ...rest } }) => (
-                <div className="flex items-center justify-between">
+                <FormItem className="flex items-center justify-between">
                   <div className="space-y-1">
                     <FormLabel>总在最前</FormLabel>
                     <FormDescription>
@@ -385,14 +414,14 @@ const SettingsTab: React.FC = () => {
                       {...rest}
                     />
                   </FormControl>
-                </div>
+                </FormItem>
               )}
             />
             <FormField
               control={form.control}
               name="transparent"
               render={({ field: { value, onChange, ...rest } }) => (
-                <div className="flex items-center justify-between">
+                <FormItem className="flex items-center justify-between">
                   <div className="space-y-1">
                     <FormLabel>
                       透明窗口
@@ -419,7 +448,7 @@ const SettingsTab: React.FC = () => {
                       {...rest}
                     />
                   </FormControl>
-                </div>
+                </FormItem>
               )}
             />
           </CardContent>
@@ -439,7 +468,7 @@ const SettingsTab: React.FC = () => {
               control={form.control}
               name="next_line_shortcut"
               render={({ field: { value, onChange, ...rest } }) => (
-                <div className="space-y-2">
+                <FormItem className="space-y-2">
                   <FormLabel>下一页</FormLabel>
                   <FormControl>
                     <ShortcutRecorder
@@ -448,14 +477,14 @@ const SettingsTab: React.FC = () => {
                       {...rest}
                     />
                   </FormControl>
-                </div>
+                </FormItem>
               )}
             />
             <FormField
               control={form.control}
               name="prev_line_shortcut"
               render={({ field: { value, onChange, ...rest } }) => (
-                <div className="space-y-2">
+                <FormItem className="space-y-2">
                   <FormLabel>上一页</FormLabel>
                   <FormControl>
                     <ShortcutRecorder
@@ -464,14 +493,14 @@ const SettingsTab: React.FC = () => {
                       {...rest}
                     />
                   </FormControl>
-                </div>
+                </FormItem>
               )}
             />
             <FormField
               control={form.control}
               name="next_chapter_shortcut"
               render={({ field: { value, onChange, ...rest } }) => (
-                <div className="space-y-2">
+                <FormItem className="space-y-2">
                   <FormLabel>下一章</FormLabel>
                   <FormControl>
                     <ShortcutRecorder
@@ -480,14 +509,14 @@ const SettingsTab: React.FC = () => {
                       {...rest}
                     />
                   </FormControl>
-                </div>
+                </FormItem>
               )}
             />
             <FormField
               control={form.control}
               name="prev_chapter_shortcut"
               render={({ field: { value, onChange, ...rest } }) => (
-                <div className="space-y-2">
+                <FormItem className="space-y-2">
                   <FormLabel>上一章</FormLabel>
                   <FormControl>
                     <ShortcutRecorder
@@ -496,7 +525,7 @@ const SettingsTab: React.FC = () => {
                       {...rest}
                     />
                   </FormControl>
-                </div>
+                </FormItem>
               )}
             />
 
@@ -506,7 +535,7 @@ const SettingsTab: React.FC = () => {
               control={form.control}
               name="boss_key_shortcut"
               render={({ field: { value, onChange, ...rest } }) => (
-                <div className="space-y-2">
+                <FormItem className="space-y-2">
                   <FormLabel>老板键</FormLabel>
                   <FormControl>
                     <ShortcutRecorder
@@ -515,14 +544,14 @@ const SettingsTab: React.FC = () => {
                       {...rest}
                     />
                   </FormControl>
-                </div>
+                </FormItem>
               )}
             />
             <FormField
               control={form.control}
               name="toggle_reading_mode_shortcut"
               render={({ field: { value, onChange, ...rest } }) => (
-                <div className="space-y-2">
+                <FormItem className="space-y-2">
                   <FormLabel>切换阅读模式</FormLabel>
                   <FormControl>
                     <ShortcutRecorder
@@ -531,7 +560,7 @@ const SettingsTab: React.FC = () => {
                       {...rest}
                     />
                   </FormControl>
-                </div>
+                </FormItem>
               )}
             />
           </CardContent>
@@ -551,7 +580,7 @@ const SettingsTab: React.FC = () => {
               control={form.control}
               name="line_size"
               render={({ field }) => (
-                <div className="col-span-2 flex items-center justify-between">
+                <FormItem className="col-span-2 flex items-center justify-between">
                   <div className="space-y-2">
                     <FormLabel>
                       每页字数
@@ -574,7 +603,7 @@ const SettingsTab: React.FC = () => {
                   <FormControl>
                     <InputWithButton {...field} />
                   </FormControl>
-                </div>
+                </FormItem>
               )}
             />
 
@@ -582,7 +611,7 @@ const SettingsTab: React.FC = () => {
               control={form.control}
               name="font_size"
               render={({ field }) => (
-                <div className="space-y-2">
+                <FormItem className="space-y-2">
                   <FormLabel>字体大小</FormLabel>
                   <FormControl>
                     <SliderWithAxis
@@ -593,19 +622,19 @@ const SettingsTab: React.FC = () => {
                       unit="px"
                     />
                   </FormControl>
-                </div>
+                </FormItem>
               )}
             />
             <FormField
               control={form.control}
               name="font_color"
               render={({ field }) => (
-                <div className="space-y-2">
+                <FormItem className="space-y-2">
                   <FormLabel>字体颜色</FormLabel>
                   <FormControl>
                     <ColorPicker {...field} />
                   </FormControl>
-                </div>
+                </FormItem>
               )}
             />
 
@@ -613,12 +642,12 @@ const SettingsTab: React.FC = () => {
               control={form.control}
               name="letter_spacing"
               render={({ field }) => (
-                <div className="space-y-2">
+                <FormItem className="space-y-2">
                   <FormLabel>字间距</FormLabel>
                   <FormControl>
                     <SliderWithAxis {...field} max={5} min={-1} step={0.1} />
                   </FormControl>
-                </div>
+                </FormItem>
               )}
             />
 
@@ -626,12 +655,12 @@ const SettingsTab: React.FC = () => {
               control={form.control}
               name="font_weight"
               render={({ field }) => (
-                <div className="space-y-2">
+                <FormItem className="space-y-2">
                   <FormLabel>字体粗细</FormLabel>
                   <FormControl>
                     <FontWeightSelector {...field} />
                   </FormControl>
-                </div>
+                </FormItem>
               )}
             />
 
@@ -639,7 +668,7 @@ const SettingsTab: React.FC = () => {
               control={form.control}
               name="font_family"
               render={({ field }) => (
-                <div className="space-y-2">
+                <FormItem className="space-y-2">
                   <FormLabel>
                     字体
                     <Tooltip>
@@ -658,7 +687,7 @@ const SettingsTab: React.FC = () => {
                   <FormControl>
                     <FontSelector {...field} />
                   </FormControl>
-                </div>
+                </FormItem>
               )}
             />
 
@@ -666,12 +695,12 @@ const SettingsTab: React.FC = () => {
               control={form.control}
               name="line_height"
               render={({ field }) => (
-                <div className="space-y-2">
+                <FormItem className="space-y-2">
                   <FormLabel>行高</FormLabel>
                   <FormControl>
                     <SliderWithAxis {...field} max={3} min={1} step={0.1} />
                   </FormControl>
-                </div>
+                </FormItem>
               )}
             />
 
@@ -696,7 +725,7 @@ const SettingsTab: React.FC = () => {
             <CardDescription>不可逆且破坏性操作</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between">
+            <FormItem className="flex items-center justify-between">
               <div className="space-y-1">
                 <FormLabel>重置所有设定</FormLabel>
                 <FormDescription>
@@ -707,7 +736,7 @@ const SettingsTab: React.FC = () => {
                 <Trash2 className="mr-2 h-4 w-4" />
                 重置所有设定
               </Button>
-            </div>
+            </FormItem>
           </CardContent>
         </Card>
       </form>

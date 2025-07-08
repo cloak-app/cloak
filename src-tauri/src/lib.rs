@@ -6,24 +6,24 @@ mod utils;
 
 use crate::commands::{config, novel, os, reader, window};
 use crate::db::setup_db;
-use crate::state::model::AppState;
-use crate::state::toggle_reading_mode;
-use crate::store::model::AppStoreKey;
-use crate::store::{get_from_app_store, init_app_store};
-use crate::utils::icon::*;
-use crate::utils::reader::NovelReader;
-use crate::utils::shortcut;
-use crate::utils::sql;
-use crate::utils::window::{open_reader_window, open_settings_window, show_all_windows};
+use crate::state::{model::AppState, toggle_reading_mode};
+use crate::store::{get_from_app_store, init_app_store, model::AppStoreKey};
+use crate::utils::{icon::*, reader::NovelReader, shortcut, sql, update::UpdateChecker, window::*};
 use log::LevelFilter;
 use std::sync::Mutex;
-use tauri::{is_dev, menu::*, tray::TrayIconBuilder, Manager, RunEvent};
+use tauri::{
+    is_dev,
+    menu::{MenuBuilder, MenuItemBuilder},
+    tray::TrayIconBuilder,
+    Manager, RunEvent,
+};
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_log::fern::colors::ColoredLevelConfig;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_window_state::Builder::new().build())
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
@@ -39,7 +39,7 @@ pub fn run() {
             tauri_plugin_log::Builder::new()
                 .with_colors(ColoredLevelConfig::default())
                 .level(if is_dev() {
-                    LevelFilter::Debug
+                    LevelFilter::Info
                 } else {
                     LevelFilter::Warn
                 })
@@ -71,7 +71,8 @@ pub fn run() {
             // 配置相关
             config::get_config,
             config::reset_config,
-            config::set_auto_check_update,
+            config::get_last_check_update_time,
+            config::set_check_update_interval,
             config::set_auto_start,
             config::set_language,
             config::set_theme,
@@ -99,6 +100,7 @@ pub fn run() {
             os::get_all_font_families,
             // 窗口相关
             window::open_reader_window,
+            window::reopen_reader_window,
             window::open_update_window,
         ])
         .setup(|app| {
@@ -111,7 +113,7 @@ pub fn run() {
                 let mut novel_reader: Option<NovelReader> = None;
 
                 let line_size =
-                    get_from_app_store::<usize>(app.handle(), AppStoreKey::LineSize).unwrap_or(50);
+                    get_from_app_store::<usize>(app.handle(), AppStoreKey::LineSize).unwrap();
 
                 if let Ok(novel) = sql::get_open_novel(&db).await {
                     novel_reader = NovelReader::new(
@@ -123,10 +125,19 @@ pub fn run() {
                     .ok();
                 }
 
+                let interval =
+                    get_from_app_store::<u64>(app.handle(), AppStoreKey::CheckUpdateInterval)
+                        .unwrap();
+
+                let mut update_checker = UpdateChecker::new();
+
+                update_checker.start(app.handle(), interval).unwrap();
+
                 app.manage(db);
                 app.manage(Mutex::new(AppState {
                     novel_reader,
                     reading_mode: false,
+                    update_checker,
                 }));
             });
 
@@ -137,23 +148,24 @@ pub fn run() {
             #[cfg(target_os = "macos")]
             {
                 let dock_visibility =
-                    get_from_app_store::<bool>(app.handle(), AppStoreKey::DockVisibility)
-                        .unwrap_or(false);
+                    get_from_app_store::<bool>(app.handle(), AppStoreKey::DockVisibility).unwrap();
                 app.set_dock_visibility(dock_visibility);
             }
 
             /* --------------------------------- 注册托盘菜单 --------------------------------- */
-            let toggle_reading_mode_i = MenuItem::with_id(
-                app,
-                "toggle_reading_mode",
-                "打开阅读模式",
-                true,
-                None::<&str>,
-            )?;
-            let open_reader_i =
-                MenuItem::with_id(app, "open_reader", "打开阅读器", true, None::<&str>)?;
-            let settings_i = MenuItem::with_id(app, "open_settings", "设置", true, None::<&str>)?;
-            let quit_i = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
+            let toggle_reading_mode_i = MenuItemBuilder::new("打开阅读模式")
+                .id("toggle_reading_mode")
+                .build(app)?;
+            let open_reader_i = MenuItemBuilder::new("打开阅读器")
+                .id("open_reader")
+                .build(app)?;
+            let settings_i = MenuItemBuilder::new("设置")
+                .id("open_settings")
+                .build(app)?;
+            let quit_i = MenuItemBuilder::new("退出")
+                .id("quit")
+                .accelerator("CmdOrCtrl+Q")
+                .build(app)?;
 
             let menu = MenuBuilder::new(app)
                 .item(&toggle_reading_mode_i)

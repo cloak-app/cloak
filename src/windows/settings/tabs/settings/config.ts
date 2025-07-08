@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const formSchema = z.object({
-  auto_check_update: z.boolean(),
+  check_update_interval: z.number(),
   auto_start: z.boolean(),
   theme: z.string(),
   language: z.string(),
