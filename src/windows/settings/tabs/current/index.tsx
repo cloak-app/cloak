@@ -15,7 +15,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Novel, Reader } from '@/types';
+import { CustomEvent, Novel, Reader } from '@/types';
 
 const CurrentTab: React.FC = () => {
   const [novel, setNovel] = useState<Novel>();
@@ -36,9 +36,7 @@ const CurrentTab: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const listener = listen('reader-change', () => {
-      fetchData();
-    });
+    const listener = listen(CustomEvent.ReaderChange, () => fetchData());
     return () => {
       listener.then((unListen) => unListen());
     };

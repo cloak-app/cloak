@@ -1,25 +1,5 @@
+use crate::constants::store::*;
 use serde_json::{Number, Value};
-
-const DEFAULT_CHECK_UPDATE_INTERVAL: u64 = 28800;
-const DEFAULT_AUTO_START: bool = false;
-const DEFAULT_LANGUAGE: &str = "zh-CN";
-const DEFAULT_THEME: &str = "system";
-const DEFAULT_DOCK_VISIBILITY: bool = true;
-const DEFAULT_ALWAYS_ON_TOP: bool = true;
-const DEFAULT_TRANSPARENT: bool = true;
-const DEFAULT_LINE_SIZE: u32 = 50;
-const DEFAULT_FONT_SIZE: u32 = 16;
-const DEFAULT_FONT_FAMILY: &str = "";
-const DEFAULT_LINE_HEIGHT: f64 = 1.0;
-const DEFAULT_FONT_WEIGHT: u32 = 400;
-const DEFAULT_FONT_COLOR: &str = "#000000";
-const DEFAULT_LETTER_SPACING: f64 = 0.0;
-const DEFAULT_NEXT_LINE_SHORTCUT: &str = "Control+Alt+ArrowRight";
-const DEFAULT_PREV_LINE_SHORTCUT: &str = "Control+Alt+ArrowLeft";
-const DEFAULT_NEXT_CHAPTER_SHORTCUT: &str = "Control+Alt+ArrowDown";
-const DEFAULT_PREV_CHAPTER_SHORTCUT: &str = "Control+Alt+ArrowUp";
-const DEFAULT_BOSS_KEY_SHORTCUT: &str = "Control+Alt+Enter";
-const DEFAULT_TOGGLE_READING_MODE_SHORTCUT: &str = "Control+Alt+Space";
 
 #[derive(Clone, Copy, Debug)]
 pub enum AppStoreKey {

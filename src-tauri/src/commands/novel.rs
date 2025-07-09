@@ -1,13 +1,9 @@
-use crate::db::model::Novel;
-use crate::db::Db;
+use crate::constants::event::*;
+use crate::db::{model::Novel, Db};
 use crate::state::model::AppState;
-use crate::store::get_from_app_store;
-use crate::store::model::AppStoreKey;
-use crate::utils::reader::NovelReader;
-use crate::utils::sql;
-use std::fs;
-use std::path::Path;
-use std::sync::Mutex;
+use crate::store::{get_from_app_store, model::AppStoreKey};
+use crate::utils::{reader::NovelReader, sql};
+use std::{fs, path::Path, sync::Mutex};
 use tauri::{Emitter, Manager};
 
 #[tauri::command]
@@ -99,7 +95,7 @@ pub async fn open_novel(
     let mut state = state.lock().map_err(|e| e.to_string())?;
     state.novel_reader = Some(reader);
 
-    app_handle.emit("reader-change", 0).unwrap();
+    app_handle.emit(READER_CHANGE, ()).unwrap();
 
     Ok(())
 }
@@ -143,7 +139,7 @@ pub async fn delete_novel(
         }
     }
 
-    app_handle.emit("reader-change", 0).unwrap();
+    app_handle.emit(READER_CHANGE, ()).unwrap();
 
     Ok(())
 }

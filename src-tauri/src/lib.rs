@@ -1,10 +1,11 @@
 mod commands;
+mod constants;
 mod db;
 mod state;
 mod store;
 mod utils;
 
-use crate::commands::{config, novel, os, reader, window};
+use crate::commands::{common, config, novel, os, reader, window};
 use crate::db::setup_db;
 use crate::state::{model::AppState, toggle_reading_mode};
 use crate::store::{get_from_app_store, init_app_store, model::AppStoreKey};
@@ -56,6 +57,8 @@ pub fn run() {
             }
         }))
         .invoke_handler(tauri::generate_handler![
+            // 通用
+            common::get_reading_mode,
             // 小说相关
             novel::add_novel,
             novel::get_novel_list,
@@ -71,7 +74,8 @@ pub fn run() {
             // 配置相关
             config::get_config,
             config::reset_config,
-            config::get_last_check_update_time,
+            config::get_last_check_result,
+            config::check_update,
             config::set_check_update_interval,
             config::set_auto_start,
             config::set_language,
@@ -139,6 +143,13 @@ pub fn run() {
                     reading_mode: false,
                     update_checker,
                 }));
+            });
+
+            /* --------------------------------- 开启时检查更新 -------------------------------- */
+
+            let app_handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                UpdateChecker::check_update(&app_handle).await;
             });
 
             /* --------------------------------- 注册全局快捷键 -------------------------------- */

@@ -1,11 +1,10 @@
 pub mod model;
 
+use crate::constants::store::*;
 use crate::store::model::AppStoreKey;
 use serde_json::Value;
 use tauri::AppHandle;
 use tauri_plugin_store::StoreExt;
-
-const APP_STORE_PATH: &str = "app_data.json";
 
 pub fn get_entries_from_app_store(app_handle: &AppHandle) -> Result<Vec<(String, Value)>, String> {
     let store = app_handle

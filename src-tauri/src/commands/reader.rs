@@ -1,7 +1,7 @@
+use crate::constants::event::*;
 use crate::db::Db;
 use crate::state::model::AppState;
-use crate::utils::reader::NovelReader;
-use crate::utils::sql;
+use crate::utils::{reader::NovelReader, sql};
 use std::sync::Mutex;
 use tauri::Emitter;
 
@@ -28,7 +28,7 @@ pub async fn close_novel_reader(
     state.novel_reader = None;
 
     app_handle
-        .emit("reader-change", 0)
+        .emit(READER_CHANGE, ())
         .map_err(|e| e.to_string())?;
 
     Ok(())
@@ -61,7 +61,7 @@ pub async fn set_read_position(
         if let Some(reader) = reader {
             reader.set_read_position(read_position)?;
             app_handle
-                .emit("reader-change", 0)
+                .emit(READER_CHANGE, ())
                 .map_err(|e| e.to_string())?;
             (
                 reader.novel_id,
@@ -91,7 +91,7 @@ pub async fn next_line(
         if let Some(reader) = reader {
             reader.next_line()?;
             app_handle
-                .emit("reader-change", 0)
+                .emit(READER_CHANGE, ())
                 .map_err(|e| e.to_string())?;
             (
                 reader.novel_id,
@@ -121,7 +121,7 @@ pub async fn prev_line(
         if let Some(reader) = reader {
             reader.prev_line()?;
             app_handle
-                .emit("reader-change", 0)
+                .emit(READER_CHANGE, ())
                 .map_err(|e| e.to_string())?;
             (
                 reader.novel_id,
@@ -151,7 +151,7 @@ pub async fn next_chapter(
         if let Some(reader) = reader {
             reader.next_chapter()?;
             app_handle
-                .emit("reader-change", 0)
+                .emit(READER_CHANGE, ())
                 .map_err(|e| e.to_string())?;
             (
                 reader.novel_id,
@@ -181,7 +181,7 @@ pub async fn prev_chapter(
         if let Some(reader) = reader {
             reader.prev_chapter()?;
             app_handle
-                .emit("reader-change", 0)
+                .emit(READER_CHANGE, ())
                 .map_err(|e| e.to_string())?;
             (
                 reader.novel_id,

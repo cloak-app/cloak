@@ -7,7 +7,7 @@ import {
   useEffect,
   useState,
 } from 'react';
-import { Config } from '@/types';
+import { Config, CustomEvent } from '@/types';
 
 export type Theme = 'dark' | 'light' | 'system';
 
@@ -61,7 +61,7 @@ export function ThemeProvider({
   }, [theme, handleThemeChange]);
 
   useEffect(() => {
-    const listener = listen('config-change', () => {
+    const listener = listen(CustomEvent.ConfigChange, () => {
       invoke<Config>('get_config').then((config) =>
         setTheme(config.theme as Theme),
       );

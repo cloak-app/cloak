@@ -1,18 +1,19 @@
 import { listen } from '@tauri-apps/api/event';
 import { WandSparkles } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { CustomEvent } from '@/types';
 
 const UpdateWindow: React.FC = () => {
   const [finished, setFinished] = useState(false);
   const [progress, setProgress] = useState<number>(0);
 
   useEffect(() => {
-    const finishedListener = listen('update-finished', () => {
-      setFinished(true);
-    });
+    const finishedListener = listen(CustomEvent.UpdateFinished, () =>
+      setFinished(true),
+    );
 
     const progressListener = listen<number>(
-      'update-progress-change',
+      CustomEvent.UpdateProgressChange,
       (progress) => {
         setProgress(progress.payload);
       },

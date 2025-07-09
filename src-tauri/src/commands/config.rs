@@ -1,10 +1,14 @@
+use crate::constants::event::*;
 use crate::db::Db;
 use crate::state::model::AppState;
-use crate::store::model::AppStoreKey;
-use crate::store::{get_entries_from_app_store, reset_app_store, set_to_app_store};
-use crate::utils::reader::NovelReader;
-use crate::utils::shortcut;
-use crate::utils::sql;
+use crate::store::{
+    get_entries_from_app_store, model::AppStoreKey, reset_app_store, set_to_app_store,
+};
+use crate::utils::{
+    reader::NovelReader,
+    shortcut, sql,
+    update::{UpdateCheckResult, UpdateChecker},
+};
 use serde_json::Value;
 use std::sync::Mutex;
 use tauri::{Emitter, Manager};
@@ -12,12 +16,12 @@ use tauri_plugin_autostart::ManagerExt;
 
 /* ---------------------------------- 偏好设置 ---------------------------------- */
 #[tauri::command]
-pub fn get_last_check_update_time(
+pub fn get_last_check_result(
     state: tauri::State<'_, Mutex<AppState>>,
-) -> Result<Option<i64>, String> {
+) -> Result<Option<UpdateCheckResult>, String> {
     let state = state.lock().map_err(|e| e.to_string())?;
 
-    Ok(state.update_checker.last_check_time)
+    Ok(state.update_checker.last_check_result)
 }
 
 #[tauri::command]
@@ -35,6 +39,13 @@ pub fn set_check_update_interval(
     update_checker
         .start(&app_handle, interval)
         .map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn check_update(app_handle: tauri::AppHandle) -> Result<(), String> {
+    UpdateChecker::check_update(&app_handle).await;
 
     Ok(())
 }
@@ -145,7 +156,7 @@ pub async fn set_line_size(
 
     sql::save_novel(&db, novel_id, read_position, read_progress).await?;
 
-    app_handle.emit("reader-change", 0).unwrap();
+    app_handle.emit(READER_CHANGE, ()).unwrap();
 
     Ok(())
 }
@@ -153,42 +164,42 @@ pub async fn set_line_size(
 #[tauri::command]
 pub fn set_font_size(app_handle: tauri::AppHandle, font_size: i64) -> Result<(), String> {
     set_to_app_store(&app_handle, AppStoreKey::FontSize, font_size)?;
-    app_handle.emit("config-change", 0).unwrap();
+    app_handle.emit(CONFIG_CHANGE, ()).unwrap();
     Ok(())
 }
 
 #[tauri::command]
 pub fn set_font_family(app_handle: tauri::AppHandle, font_family: String) -> Result<(), String> {
     set_to_app_store(&app_handle, AppStoreKey::FontFamily, font_family)?;
-    app_handle.emit("config-change", 0).unwrap();
+    app_handle.emit(CONFIG_CHANGE, ()).unwrap();
     Ok(())
 }
 
 #[tauri::command]
 pub fn set_line_height(app_handle: tauri::AppHandle, line_height: f64) -> Result<(), String> {
     set_to_app_store(&app_handle, AppStoreKey::LineHeight, line_height)?;
-    app_handle.emit("config-change", 0).unwrap();
+    app_handle.emit(CONFIG_CHANGE, ()).unwrap();
     Ok(())
 }
 
 #[tauri::command]
 pub fn set_letter_spacing(app_handle: tauri::AppHandle, letter_spacing: f64) -> Result<(), String> {
     set_to_app_store(&app_handle, AppStoreKey::LetterSpacing, letter_spacing)?;
-    app_handle.emit("config-change", 0).unwrap();
+    app_handle.emit(CONFIG_CHANGE, ()).unwrap();
     Ok(())
 }
 
 #[tauri::command]
 pub fn set_font_weight(app_handle: tauri::AppHandle, font_weight: i64) -> Result<(), String> {
     set_to_app_store(&app_handle, AppStoreKey::FontWeight, font_weight)?;
-    app_handle.emit("config-change", 0).unwrap();
+    app_handle.emit(CONFIG_CHANGE, ()).unwrap();
     Ok(())
 }
 
 #[tauri::command]
 pub fn set_font_color(app_handle: tauri::AppHandle, font_color: String) -> Result<(), String> {
     set_to_app_store(&app_handle, AppStoreKey::FontColor, font_color)?;
-    app_handle.emit("config-change", 0).unwrap();
+    app_handle.emit(CONFIG_CHANGE, ()).unwrap();
     Ok(())
 }
 
@@ -308,6 +319,6 @@ pub fn reset_config(
 
     shortcut::activate_shortcuts(&app_handle, shortcuts)?;
 
-    app_handle.emit("config-change", 0).unwrap();
+    app_handle.emit(CONFIG_CHANGE, ()).unwrap();
     Ok(())
 }

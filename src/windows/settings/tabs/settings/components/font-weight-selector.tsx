@@ -8,15 +8,20 @@ import {
 } from '@/components/ui/select';
 
 interface FontWeightSelectorProps {
-  value: string;
-  onChange: (value: string) => void;
-  defaultValue?: string;
+  value: number;
+  onChange: (value: number) => void;
+  defaultValue?: number;
 }
 
 const FontWeightSelector: React.FC<FontWeightSelectorProps> = (props) => {
   const [value, onChange] = useControllableValue(props);
+
+  const handleChange = (value: string) => {
+    onChange(parseInt(value));
+  };
+
   return (
-    <Select value={value} onValueChange={onChange}>
+    <Select value={String(value)} onValueChange={handleChange}>
       <SelectTrigger className="w-full">
         <SelectValue />
       </SelectTrigger>

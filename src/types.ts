@@ -1,3 +1,4 @@
+/* ----------------------------------- 小说 ----------------------------------- */
 export interface Novel {
   /** 小说 ID */
   id: number;
@@ -19,6 +20,7 @@ export interface Novel {
   is_open: boolean;
 }
 
+/* ----------------------------------- 阅读器 ---------------------------------- */
 export interface Reader {
   /** 小说 ID */
   novel_id: number;
@@ -42,6 +44,7 @@ export interface Chapter {
   start_line: number;
 }
 
+/* ----------------------------------- 配置 ----------------------------------- */
 export interface Config {
   /* ---------------------------------- 偏好设置 ---------------------------------- */
   /** 自动检查更新 */
@@ -69,7 +72,7 @@ export interface Config {
   /** 行高 */
   line_height: number;
   /** 字体粗细 */
-  font_weight: string;
+  font_weight: number;
   /** 字体颜色 */
   font_color: string;
   /** 字间距 */
@@ -85,4 +88,28 @@ export interface Config {
   prev_chapter_shortcut: string;
   /** 老板键快捷键 */
   boss_key_shortcut: string;
+}
+
+/* ----------------------------------- 更新 ----------------------------------- */
+export enum CheckUpdateStatus {
+  Checking = 'checking',
+  Success = 'success',
+  Failed = 'failed',
+}
+
+export interface UpdateCheckResult {
+  /** 检查时间 */
+  timestamp: number;
+  /** 检查结果 */
+  status: CheckUpdateStatus;
+}
+
+/* ----------------------------------- 事件 ----------------------------------- */
+export enum CustomEvent {
+  ConfigChange = 'config-change',
+  ReaderChange = 'reader-change',
+  ReadingModeChange = 'reading-mode-change',
+  UpdateCheckStatusChange = 'update-check-status-changed',
+  UpdateProgressChange = 'update-progress-change',
+  UpdateFinished = 'update-finished',
 }

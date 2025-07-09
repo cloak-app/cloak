@@ -5,7 +5,7 @@ import { useRequest } from 'ahooks';
 import { Minus, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Config, Reader } from '@/types';
+import { Config, CustomEvent, Reader } from '@/types';
 
 export default function ReaderWindow() {
   const {
@@ -15,6 +15,10 @@ export default function ReaderWindow() {
   } = useRequest(() => invoke<Reader>('get_novel_reader'), {
     onError: () => mutate(undefined),
   });
+
+  const { data: readingMode, refresh: refreshReadingMode } = useRequest(() =>
+    invoke<string>('get_reading_mode'),
+  );
 
   const { data: line, refresh: refreshLine } = useRequest(() =>
     invoke<string>('get_line'),
@@ -30,7 +34,7 @@ export default function ReaderWindow() {
   const [isFocus, setIsFocus] = useState(true);
 
   useEffect(() => {
-    const listener = listen('reader-change', () => {
+    const listener = listen(CustomEvent.ReaderChange, () => {
       refreshLine();
       refreshReader();
     });
@@ -40,20 +44,24 @@ export default function ReaderWindow() {
   }, [refreshLine, refreshReader]);
 
   useEffect(() => {
-    const listener = listen('config-change', () => refreshConfig());
+    const listener = listen(CustomEvent.ConfigChange, () => refreshConfig());
     return () => {
       listener.then((unListen) => unListen());
     };
   }, [refreshConfig]);
 
   useEffect(() => {
-    const focusListener = win.listen('tauri://focus', () => {
-      setIsFocus(true);
-    });
+    const listener = listen(CustomEvent.ReadingModeChange, () =>
+      refreshReadingMode(),
+    );
+    return () => {
+      listener.then((unListen) => unListen());
+    };
+  }, [refreshReadingMode]);
 
-    const blurListener = win.listen('tauri://blur', () => {
-      setIsFocus(false);
-    });
+  useEffect(() => {
+    const focusListener = win.listen('tauri://focus', () => setIsFocus(true));
+    const blurListener = win.listen('tauri://blur', () => setIsFocus(false));
 
     return () => {
       focusListener.then((unListen) => unListen());
@@ -92,6 +100,11 @@ export default function ReaderWindow() {
             </p>
           </div>
         )}
+        {!readingMode ? (
+          <p className="text-center text-sm text-destructive mt-1">
+            阅读模式未开启
+          </p>
+        ) : null}
       </div>
 
       <div
