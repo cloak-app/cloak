@@ -11,9 +11,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ScrollMask } from '@/components/ui/scroll-mask';
+import { Search } from '@/components/ui/search';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { Chapter, Novel, Reader } from '@/types';
@@ -163,7 +163,7 @@ const ChapterDialog: React.FC<ChapterDialogProps> = (props) => {
             {novel?.title} - 共 {chapters?.length} 章
           </DialogDescription>
         </DialogHeader>
-        <Input
+        <Search
           placeholder="搜索章节..."
           value={chapterSearch}
           onChange={(e) => setChapterSearch(e.target.value)}

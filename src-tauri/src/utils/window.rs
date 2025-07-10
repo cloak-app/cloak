@@ -23,12 +23,16 @@ pub fn open_reader_window(app_handle: &AppHandle) -> Result<(), String> {
 
         let transparent = get_from_app_store::<bool>(app_handle, AppStoreKey::Transparent).unwrap();
 
+        let dock_visibility =
+            get_from_app_store::<bool>(app_handle, AppStoreKey::DockVisibility).unwrap();
+
         WebviewWindowBuilder::new(app_handle, "reader", WebviewUrl::default())
             .min_inner_size(200.0, 50.0)
             .shadow(false)
             .transparent(transparent)
             .decorations(false)
             .always_on_top(always_on_top)
+            .skip_taskbar(!dock_visibility)
             .build()
             .unwrap();
     }

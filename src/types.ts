@@ -4,6 +4,12 @@ export interface Novel {
   id: number;
   /** 小说标题 */
   title: string;
+  /** 小说封面 */
+  cover?: ArrayBuffer;
+  /** 小说作者 */
+  author?: string;
+  /** 小说描述 */
+  description?: string;
   /** 小说路径 */
   path: string;
   /** 上次阅读位置 */
@@ -17,7 +23,7 @@ export interface Novel {
   /** 更新时间 */
   updated_at: string;
   /** 是否打开 */
-  is_open: boolean;
+  is_open: 0 | 1;
 }
 
 /* ----------------------------------- 阅读器 ---------------------------------- */

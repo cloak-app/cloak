@@ -2,11 +2,22 @@ use crate::db::model::Novel;
 use crate::db::Db;
 
 // 新增小说
-pub async fn add_novel(db: &Db, title: &str, path: &str, file_size: i64) -> Result<(), String> {
+pub async fn add_novel(
+    db: &Db,
+    title: &str,
+    cover: Option<Vec<u8>>,
+    author: Option<String>,
+    description: Option<String>,
+    path: &str,
+    file_size: i64,
+) -> Result<(), String> {
     sqlx::query(
-        "INSERT INTO novel (title, path, read_position, read_progress, file_size) VALUES (?1, ?2, ?3, ?4, ?5)",
+        "INSERT INTO novel (title, cover, author, description, path, read_position, read_progress, file_size) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
     )
     .bind(title)
+    .bind(cover)
+    .bind(author)
+    .bind(description)
     .bind(path)
     .bind(0)
     .bind(0)

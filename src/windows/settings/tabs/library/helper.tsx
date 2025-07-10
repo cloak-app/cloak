@@ -1,19 +1,12 @@
-import { Badge } from '@/components/ui/badge';
+export const getNovelCover = (cover?: ArrayBuffer) => {
+  if (!cover) return '';
 
-export enum NovelStatus {
-  READING = 'READING',
-  READ = 'READ',
-  UN_READ = 'UN_READ',
-}
+  const int8Array = new Int8Array(cover);
+  const buffer = int8Array.buffer;
 
-export const getNovelStatus = (progress: number) => {
-  if (progress === 0) return NovelStatus.UN_READ;
-  if (progress === 100) return NovelStatus.READ;
-  return NovelStatus.READING;
+  return URL.createObjectURL(new Blob([buffer]));
 };
 
-export const STATUS_BADGE_MAP: Record<NovelStatus, React.ReactNode> = {
-  [NovelStatus.UN_READ]: <Badge variant="outline">未读</Badge>,
-  [NovelStatus.READ]: <Badge variant="secondary">已完成</Badge>,
-  [NovelStatus.READING]: <Badge variant="default">在读</Badge>,
+export const getNovelFileExtension = (path: string) => {
+  return path.split('.').pop()?.toUpperCase();
 };

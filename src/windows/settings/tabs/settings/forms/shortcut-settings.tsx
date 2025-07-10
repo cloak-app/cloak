@@ -21,28 +21,34 @@ import { useFormWatch } from '@/hooks/use-form-watch';
 const ShortcutSettingsForm: React.FC<SubFormProps> = (props) => {
   const { form } = props;
 
-  useFormWatch(form, 'next_line_shortcut', (shortcut) => {
-    invoke('set_next_line_shortcut', { shortcut });
+  useFormWatch(form, 'next_line_shortcut', async (shortcut) => {
+    await invoke('set_next_line_shortcut', { shortcut });
+    invoke('activate_all_shortcuts');
   });
 
-  useFormWatch(form, 'prev_line_shortcut', (shortcut) => {
-    invoke('set_prev_line_shortcut', { shortcut });
+  useFormWatch(form, 'prev_line_shortcut', async (shortcut) => {
+    await invoke('set_prev_line_shortcut', { shortcut });
+    invoke('activate_all_shortcuts');
   });
 
-  useFormWatch(form, 'next_chapter_shortcut', (shortcut) => {
-    invoke('set_next_chapter_shortcut', { shortcut });
+  useFormWatch(form, 'next_chapter_shortcut', async (shortcut) => {
+    await invoke('set_next_chapter_shortcut', { shortcut });
+    invoke('activate_all_shortcuts');
   });
 
-  useFormWatch(form, 'prev_chapter_shortcut', (shortcut) => {
-    invoke('set_prev_chapter_shortcut', { shortcut });
+  useFormWatch(form, 'prev_chapter_shortcut', async (shortcut) => {
+    await invoke('set_prev_chapter_shortcut', { shortcut });
+    invoke('activate_all_shortcuts');
   });
 
-  useFormWatch(form, 'boss_key_shortcut', (shortcut) => {
-    invoke('set_boss_key_shortcut', { shortcut });
+  useFormWatch(form, 'boss_key_shortcut', async (shortcut) => {
+    await invoke('set_boss_key_shortcut', { shortcut });
+    invoke('activate_all_shortcuts');
   });
 
-  useFormWatch(form, 'toggle_reading_mode_shortcut', (shortcut) => {
-    invoke('set_toggle_reading_mode_shortcut', { shortcut });
+  useFormWatch(form, 'toggle_reading_mode_shortcut', async (shortcut) => {
+    await invoke('set_toggle_reading_mode_shortcut', { shortcut });
+    invoke('activate_all_shortcuts');
   });
 
   return (

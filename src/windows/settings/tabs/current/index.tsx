@@ -50,7 +50,15 @@ const CurrentTab: React.FC = () => {
     invoke('open_reader_window');
   };
 
-  if (!reader || !novel) return null;
+  if (!reader || !novel)
+    return (
+      <div className="text-center py-12">
+        <h3 className="text-lg font-medium mb-2">暂无阅读的小说</h3>
+        <p className="text-muted-foreground mb-4">
+          请前往小说列表打开一本小说开始阅读
+        </p>
+      </div>
+    );
 
   return (
     <Card>

@@ -1,22 +1,21 @@
 import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
 import { useRequest } from 'ahooks';
-import dayjs from 'dayjs';
 import { filesize } from 'filesize';
-import { MoreHorizontal, Plus, Trash2 } from 'lucide-react';
+import {
+  Book,
+  File,
+  FileText,
+  HardDrive,
+  MoreHorizontal,
+  Plus,
+} from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { getNovelStatus, NovelStatus, STATUS_BADGE_MAP } from './helper';
+import { getNovelCover, getNovelFileExtension } from './helper';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,17 +25,19 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
+import { Search } from '@/components/ui/search';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Novel } from '@/types';
 
 const LibraryTab: React.FC = () => {
-  const { data: novelList, refresh } = useRequest(() =>
+  const { data: novels, refresh } = useRequest(() =>
     invoke<Novel[]>('get_novel_list'),
   );
 
@@ -49,24 +50,24 @@ const LibraryTab: React.FC = () => {
     });
   };
 
-  const handleOpen = (id: number) => {
-    toast.promise(invoke('open_novel', { id }), {
-      loading: '打开小说中...',
-      success: '打开成功！',
-      error: '打开失败！',
-      finally: () => refresh(),
-    });
-  };
-
-  const handleContinue = () => {
-    invoke('open_reader_window');
+  const handleOpen = (novel: Novel) => {
+    if (novel.is_open) {
+      invoke('open_reader_window');
+    } else {
+      toast.promise(invoke('open_novel', { id: novel.id }), {
+        loading: '打开小说中...',
+        success: '打开成功！',
+        error: '打开失败！',
+        finally: () => refresh(),
+      });
+    }
   };
 
   const handleAdd = async () => {
     const file = await open({
       multiple: false,
       directory: false,
-      filters: [{ name: 'txt', extensions: ['txt'] }],
+      filters: [{ name: 'novel', extensions: ['txt', 'epub'] }],
     });
 
     if (!file) return;
@@ -79,119 +80,180 @@ const LibraryTab: React.FC = () => {
     });
   };
 
-  const handleOpenFileDirectory = (path: string) => {
+  const handleShowInFolder = (path: string) => {
     invoke('reveal_item_in_dir', { path });
   };
 
-  const [filter, setFilter] = useState('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredNovelList = novelList?.filter((novel) => {
-    if (filter === 'ALL') return true;
-    if (filter === NovelStatus.READING)
-      return novel.read_progress > 0 && novel.read_progress < 100;
-    if (filter === NovelStatus.READ) return novel.read_progress === 100;
-    if (filter === NovelStatus.UN_READ) return novel.read_progress === 0;
-    return false;
+  const filteredNovels = novels?.filter((novel) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      novel.title.toLowerCase().includes(query) ||
+      novel.author?.toLowerCase().includes(query) ||
+      novel.description?.toLowerCase().includes(query)
+    );
   });
 
   return (
     <>
-      <div className="flex justify-between items-center">
+      {/* 页面头部 */}
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-lg font-semibold text-primary">我的小说库</h3>
+          <h1 className="text-lg font-bold">小说列表</h1>
           <p className="text-sm text-muted-foreground">
-            共 {novelList?.length} 本小说
+            共 {novels?.length} 本小说
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={handleAdd}>
-            <Plus className="text-primary" />
+
+        <div className="flex items-center gap-4">
+          <Search
+            placeholder="搜索小说、作者..."
+            className="w-64"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <Button onClick={handleAdd}>
+            <Plus className="h-4 w-4 mr-2" />
+            导入小说
           </Button>
-          <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="w-32 text-primary">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">全部</SelectItem>
-              <SelectItem value={NovelStatus.READING}>在读</SelectItem>
-              <SelectItem value={NovelStatus.READ}>已完成</SelectItem>
-              <SelectItem value={NovelStatus.UN_READ}>未读</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        {filteredNovelList?.map((novel) => {
-          const novelStatus = getNovelStatus(novel.read_progress);
+      {/* 小说表格 */}
+      <div className="border rounded-lg">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="min-w-[200px]">小说</TableHead>
+              <TableHead>作者</TableHead>
+              <TableHead>进度</TableHead>
+              <TableHead>大小</TableHead>
+              <TableHead>格式</TableHead>
+              <TableHead></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredNovels?.map((novel) => (
+              <TableRow key={novel.id}>
+                <TableCell>
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-16 w-12 rounded flex-shrink-0">
+                      <AvatarImage
+                        src={getNovelCover(novel.cover) || undefined}
+                        alt={novel.title}
+                        className="object-cover"
+                      />
+                      <AvatarFallback className="rounded text-xs">
+                        <FileText size={16} />
+                      </AvatarFallback>
+                    </Avatar>
 
-          return (
-            <Card key={novel.id} className="hover:shadow-md">
-              <CardHeader>
-                <CardTitle className="truncate">{novel.title}</CardTitle>
-                <CardDescription>{filesize(novel.file_size)}</CardDescription>
-                <CardAction>{STATUS_BADGE_MAP[novelStatus]}</CardAction>
-              </CardHeader>
-              <CardContent>
-                {/* 添加时间和进度 */}
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>
-                    添加于 {dayjs(novel.created_at).format('YYYY-MM-DD')}
-                  </span>
-                  <span>{novel.read_progress.toFixed(2)}% 已读</span>
-                </div>
-                <Progress className="mt-2" value={novel.read_progress} />
-              </CardContent>
-              <CardFooter className="gap-2">
-                {novel.is_open ? (
-                  <Button className="flex-1" onClick={handleContinue}>
-                    继续阅读
-                  </Button>
-                ) : (
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => handleOpen(novel.id)}
-                  >
-                    开始阅读
-                  </Button>
-                )}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="data-[state=open]:bg-muted"
-                    >
-                      <MoreHorizontal />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-[160px]">
-                    <DropdownMenuLabel>操作</DropdownMenuLabel>
-                    <DropdownMenuItem
-                      onClick={() => handleOpenFileDirectory(novel.path)}
-                    >
-                      打开小说目录
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      variant="destructive"
-                      onClick={() => handleDelete(novel.id)}
-                    >
-                      <Trash2 />
-                      删除
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </CardFooter>
-            </Card>
-          );
-        })}
-        {filteredNovelList?.length === 0 && (
-          <div className="col-span-2 flex justify-center items-center h-full">
-            <p className="text-muted-foreground">暂无小说</p>
-          </div>
-        )}
+                    <div className="w-0 flex-1 flex flex-col justify-center">
+                      <div className="truncate text-sm font-medium space-x-1">
+                        {!!novel.is_open && (
+                          <Badge
+                            variant="outline"
+                            className="text-xs px-1 py-0"
+                          >
+                            在读
+                          </Badge>
+                        )}
+                        <span>{novel.title}</span>
+                      </div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        {novel.description}
+                      </div>
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  {novel.author ? (
+                    <span className="text-sm">{novel.author}</span>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">未知</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">
+                        {novel.read_progress.toFixed(2)}%
+                      </span>
+                      {novel.read_progress === 100 && (
+                        <Badge variant="outline" className="text-xs px-1 py-0">
+                          已读完
+                        </Badge>
+                      )}
+                    </div>
+                    <Progress value={novel.read_progress} className="h-1" />
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <HardDrive size={12} />
+                    {filesize(novel.file_size)}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <File size={12} />
+                    {getNovelFileExtension(novel.path)}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className="data-[state=open]:bg-muted"
+                      >
+                        <MoreHorizontal size={14} />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>操作</DropdownMenuLabel>
+                      <DropdownMenuItem onClick={() => handleOpen(novel)}>
+                        继续阅读
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleShowInFolder(novel.path)}
+                      >
+                        在文件夹中显示
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onClick={() => handleDelete(novel.id)}
+                      >
+                        删除
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
+
+      {/* 空状态 */}
+      {filteredNovels?.length === 0 && novels && novels?.length > 0 && (
+        <div className="text-center py-12">
+          <h3 className="text-lg font-medium mb-2">没有找到匹配的小说</h3>
+          <p className="text-muted-foreground mb-4">试试其他关键词</p>
+        </div>
+      )}
+
+      {!novels?.length && (
+        <div className="text-center py-12">
+          <Book size={48} className="text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-medium mb-2">还没有小说</h3>
+          <p className="text-muted-foreground mb-4">
+            导入你的第一本小说开始阅读吧
+          </p>
+        </div>
+      )}
     </>
   );
 };

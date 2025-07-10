@@ -3,6 +3,7 @@ use crate::db::{model::Novel, Db};
 use crate::state::model::AppState;
 use crate::store::{get_from_app_store, model::AppStoreKey};
 use crate::utils::{reader::NovelReader, sql};
+use epub::doc::EpubDoc;
 use std::{fs, path::Path, sync::Mutex};
 use tauri::{Emitter, Manager};
 
@@ -24,8 +25,12 @@ pub async fn add_novel(
         .and_then(|name| name.to_str())
         .ok_or_else(|| format!("无法获取文件名: {path}"))?;
 
-    // 校验文件后缀名为 .txt
-    if !filename.ends_with(".txt") {
+    let extension = filepath
+        .extension()
+        .ok_or_else(|| format!("无法获取文件扩展名: {path}"))?;
+
+    // 校验文件后缀名为 .txt 或 .epub
+    if extension != "txt" && extension != "epub" {
         return Err(format!("文件格式不支持: {filename}"));
     }
 
@@ -44,6 +49,16 @@ pub async fn add_novel(
         None => return Err(format!("非法文件名: {filename}")),
     };
 
+    let (cover, author, description) = if extension == "epub" {
+        let mut doc = EpubDoc::new(&new_path).map_err(|e| e.to_string())?;
+        let cover = doc.get_cover().map(|(blob, _)| blob);
+        let author = doc.mdata("creator");
+        let description = doc.mdata("description");
+        (cover, author, description)
+    } else {
+        (None, None, None)
+    };
+
     let new_path_str = match new_path.to_str() {
         Some(v) => v,
         None => return Err(format!("文件路径转换失败: {new_path:?}")),
@@ -54,7 +69,16 @@ pub async fn add_novel(
         .map(|metadata| metadata.len())
         .map_err(|e| e.to_string())?;
 
-    sql::add_novel(&db, title, new_path_str, file_size as i64).await?;
+    sql::add_novel(
+        &db,
+        title,
+        cover,
+        author,
+        description,
+        new_path_str,
+        file_size as i64,
+    )
+    .await?;
 
     Ok(())
 }

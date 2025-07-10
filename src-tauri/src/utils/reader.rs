@@ -1,4 +1,6 @@
+use epub::doc::EpubDoc;
 use regex::Regex;
+use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize, Serializer};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -56,45 +58,26 @@ impl NovelReader {
     }
 
     pub fn read_lines(path: &str, line_size: usize) -> Result<(Vec<String>, Vec<Chapter>), String> {
-        let file = File::open(path).map_err(|e| e.to_string())?;
-        let buf_reader = BufReader::new(file);
+        let extension = path.split('.').last().unwrap_or_default();
 
-        let mut lines = Vec::new();
-        let mut chapters = Vec::new();
+        let lines = match extension {
+            "txt" => TxtReader::read_lines(path, line_size)?,
+            "epub" => EpubReader::read_lines(path, line_size)?,
+            _ => return Err("不支持的文件类型".to_string()),
+        };
 
-        let chapter_re = Regex::new(r"^(第[零一二三四五六七八九十百千万1-9]+章.*)$")
-            .map_err(|e| e.to_string())?;
+        let chapters = lines
+            .iter()
+            .enumerate()
+            .filter(|(_, line)| line.is_chapter)
+            .map(|(index, line)| Chapter {
+                index,
+                title: line.content.clone(),
+                start_line: index,
+            })
+            .collect();
 
-        for line in buf_reader.lines() {
-            let line_string = line.map_err(|e| e.to_string())?;
-
-            // 如果是章节，直接添加行
-            let caps = chapter_re.captures(&line_string);
-            if let Some(caps) = caps {
-                let chapter = Chapter {
-                    index: chapters.len(),
-                    title: caps[1].to_string(),
-                    start_line: lines.len(),
-                };
-
-                chapters.push(chapter);
-                lines.push(line_string);
-            } else {
-                let mut temp_line = String::new();
-
-                for ele in line_string.chars() {
-                    temp_line.push(ele);
-                    if temp_line.chars().count() >= line_size {
-                        lines.push(temp_line);
-                        temp_line = String::new();
-                    }
-                }
-
-                if temp_line.chars().count() > 0 {
-                    lines.push(temp_line);
-                }
-            }
-        }
+        let lines = lines.iter().map(|line| line.content.clone()).collect();
 
         Ok((lines, chapters))
     }
@@ -193,5 +176,129 @@ impl NovelReader {
         }
 
         Ok(())
+    }
+}
+
+struct Line {
+    pub is_chapter: bool,
+    pub content: String,
+}
+
+trait FileReader {
+    fn read_lines(path: &str, line_size: usize) -> Result<Vec<Line>, String>;
+}
+
+struct TxtReader;
+
+impl FileReader for TxtReader {
+    fn read_lines(path: &str, line_size: usize) -> Result<Vec<Line>, String> {
+        let file = File::open(path).map_err(|e| e.to_string())?;
+        let buf_reader = BufReader::new(file);
+
+        let mut lines: Vec<Line> = Vec::new();
+
+        let chapter_regex = Regex::new(r"^(第[零一二三四五六七八九十百千万1-9]+章.*)$").unwrap();
+
+        for line in buf_reader.lines() {
+            let line_string = line.map_err(|e| e.to_string())?;
+            let lin_str = line_string.trim();
+
+            // 如果是章节，直接添加行
+            let captures = chapter_regex.captures(lin_str);
+
+            // 是章节
+            if let Some(captures) = captures {
+                lines.push(Line {
+                    is_chapter: true,
+                    content: captures[1].to_string(),
+                });
+            } else {
+                let mut temp_line = String::new();
+
+                for ele in lin_str.chars() {
+                    temp_line.push(ele);
+                    if temp_line.chars().count() >= line_size {
+                        lines.push(Line {
+                            is_chapter: false,
+                            content: temp_line,
+                        });
+                        temp_line = String::new();
+                    }
+                }
+
+                if temp_line.chars().count() > 0 {
+                    lines.push(Line {
+                        is_chapter: false,
+                        content: temp_line,
+                    });
+                }
+            }
+        }
+
+        Ok(lines)
+    }
+}
+
+struct EpubReader;
+
+impl FileReader for EpubReader {
+    fn read_lines(path: &str, line_size: usize) -> Result<Vec<Line>, String> {
+        let mut doc = EpubDoc::new(path).map_err(|e| e.to_string())?;
+
+        let mut lines: Vec<Line> = Vec::new();
+
+        let spine_idrefs: Vec<String> = doc.spine.iter().map(|spine| spine.idref.clone()).collect();
+
+        for spine_idref in spine_idrefs {
+            if let Some(page) = doc.resources.get(&spine_idref) {
+                let page_path = page.0.clone();
+                let page_content = doc.get_resource_str_by_path(page_path).unwrap();
+                let page_html = Html::parse_document(page_content.as_str());
+
+                let chapter_title_selector = Selector::parse("head > title").unwrap();
+
+                let chapter_title = page_html
+                    .select(&chapter_title_selector)
+                    .next()
+                    .unwrap()
+                    .text()
+                    .collect::<Vec<_>>()
+                    .join("");
+
+                lines.push(Line {
+                    is_chapter: true,
+                    content: chapter_title,
+                });
+
+                let line_selector = Selector::parse("p").unwrap();
+
+                for line in page_html.select(&line_selector) {
+                    let line_string = line.text().collect::<Vec<_>>().join("");
+                    let line_str = line_string.trim();
+
+                    let mut temp_line = String::new();
+
+                    for ele in line_str.chars() {
+                        temp_line.push(ele);
+                        if temp_line.chars().count() >= line_size {
+                            lines.push(Line {
+                                is_chapter: false,
+                                content: temp_line,
+                            });
+                            temp_line = String::new();
+                        }
+                    }
+
+                    if temp_line.chars().count() > 0 {
+                        lines.push(Line {
+                            is_chapter: false,
+                            content: temp_line,
+                        });
+                    }
+                }
+            }
+        }
+
+        Ok(lines)
     }
 }

@@ -11,7 +11,7 @@ use crate::utils::{
 };
 use serde_json::Value;
 use std::sync::Mutex;
-use tauri::{Emitter, Manager};
+use tauri::{ActivationPolicy, Emitter, Manager};
 use tauri_plugin_autostart::ManagerExt;
 
 /* ---------------------------------- 偏好设置 ---------------------------------- */
@@ -90,9 +90,18 @@ pub fn set_dock_visibility(
     set_to_app_store(&app_handle, AppStoreKey::DockVisibility, dock_visibility)?;
 
     #[cfg(target_os = "macos")]
-    app_handle
-        .set_dock_visibility(dock_visibility)
-        .map_err(|e| e.to_string())?;
+    {
+        let activation_policy = if dock_visibility {
+            ActivationPolicy::Regular
+        } else {
+            ActivationPolicy::Accessory
+        };
+
+        app_handle
+            .set_activation_policy(activation_policy)
+            .map_err(|e| e.to_string())?;
+    }
+
     Ok(())
 }
 

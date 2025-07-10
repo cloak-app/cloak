@@ -21,6 +21,8 @@ const ShortcutRecorder: React.FC<ShortcutRecorderProps> = (props) => {
     e.preventDefault();
     e.stopPropagation();
 
+    console.log(e.code);
+
     const key = normalizeKey(e.code);
 
     // Update pressed keys
@@ -53,10 +55,9 @@ const ShortcutRecorder: React.FC<ShortcutRecorderProps> = (props) => {
   useEffect(() => {
     if (currentKeys.length && pressedKeys.length === 0 && isEditing) {
       setIsEditing(false);
-      onChange(currentKeys.join('+'));
       setCurrentKeys([]);
       setPressedKeys([]);
-      invoke('activate_all_shortcuts');
+      onChange(currentKeys.join('+'));
     }
   }, [pressedKeys, currentKeys, isEditing, onChange]);
 
@@ -76,7 +77,9 @@ const ShortcutRecorder: React.FC<ShortcutRecorderProps> = (props) => {
     setIsEditing(true);
   };
 
-  const renderKeys = isEditing ? currentKeys : value?.split('+');
+  const renderKeys = isEditing
+    ? currentKeys
+    : value?.split('+')?.filter(Boolean);
 
   const formatPlaceholder = () => {
     if (isEditing && !renderKeys?.length) return '按下按键以开始录制';
