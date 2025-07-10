@@ -1,7 +1,13 @@
 import { invoke } from '@tauri-apps/api/core';
 import { useControllableValue, useEventListener } from 'ahooks';
-import React, { useEffect, useState } from 'react';
-import { formatKey, isModifierKey, normalizeKey } from './helper';
+import React, { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
+import {
+  formatKey,
+  isModifierKey,
+  normalizeKey,
+  validateShortcut,
+} from './helper';
 import { Input } from '@/components/ui/input';
 
 interface ShortcutRecorderProps {
@@ -16,16 +22,15 @@ const ShortcutRecorder: React.FC<ShortcutRecorderProps> = (props) => {
   const [pressedKeys, setPressedKeys] = useState<string[]>([]);
   const [currentKeys, setCurrentKeys] = useState<string[]>([]);
 
+  const inputRef = useRef<HTMLInputElement>(null);
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!isEditing) return;
     e.preventDefault();
     e.stopPropagation();
 
-    console.log(e.code);
-
     const key = normalizeKey(e.code);
 
-    // Update pressed keys
     setPressedKeys((prev) => [...prev, key]);
 
     setCurrentKeys((prev) => {
@@ -41,7 +46,6 @@ const ShortcutRecorder: React.FC<ShortcutRecorderProps> = (props) => {
         nonModifiers = nonModifiers.slice(0, 2);
       }
 
-      // Combine modifiers and non-modifiers
       return [...modifiers, ...nonModifiers];
     });
   };
@@ -57,7 +61,14 @@ const ShortcutRecorder: React.FC<ShortcutRecorderProps> = (props) => {
       setIsEditing(false);
       setCurrentKeys([]);
       setPressedKeys([]);
-      onChange(currentKeys.join('+'));
+
+      validateShortcut(currentKeys)
+        .then(() => {
+          onChange(currentKeys.join('+'));
+          toast.success('快捷键设置成功');
+        })
+        .catch((err) => toast.error(err))
+        .finally(() => inputRef.current?.blur());
     }
   }, [pressedKeys, currentKeys, isEditing, onChange]);
 
@@ -94,6 +105,7 @@ const ShortcutRecorder: React.FC<ShortcutRecorderProps> = (props) => {
     <Input
       className="w-full text-center"
       readOnly
+      ref={inputRef}
       onFocus={handleStart}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}

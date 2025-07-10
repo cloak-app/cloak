@@ -9,6 +9,7 @@ import {
   HardDrive,
   MoreHorizontal,
   Plus,
+  Trash2,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -226,6 +227,7 @@ const LibraryTab: React.FC = () => {
                         variant="destructive"
                         onClick={() => handleDelete(novel.id)}
                       >
+                        <Trash2 size={14} />
                         删除
                       </DropdownMenuItem>
                     </DropdownMenuContent>

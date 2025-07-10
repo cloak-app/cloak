@@ -54,7 +54,7 @@ export interface Chapter {
 export interface Config {
   /* ---------------------------------- 偏好设置 ---------------------------------- */
   /** 自动检查更新 */
-  auto_check_update: boolean;
+  check_update_interval: number;
   /** 自动启动 */
   auto_start: boolean;
   /** 语言 */
@@ -94,6 +94,8 @@ export interface Config {
   prev_chapter_shortcut: string;
   /** 老板键快捷键 */
   boss_key_shortcut: string;
+  /** 切换阅读模式快捷键 */
+  toggle_reading_mode_shortcut: string;
 }
 
 /* ----------------------------------- 更新 ----------------------------------- */

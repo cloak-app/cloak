@@ -22,15 +22,28 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { isWindows } from '@/constants';
 import { useFormWatch } from '@/hooks/use-form-watch';
 
 const WindowSettingsForm: React.FC<SubFormProps> = (props) => {
   const { form } = props;
 
-  useFormWatch(form, 'dock_visibility', (dockVisibility) => {
+  useFormWatch(form, 'dock_visibility', async (dockVisibility) => {
     console.log('run');
 
-    invoke('set_dock_visibility', { dockVisibility });
+    await invoke('set_dock_visibility', { dockVisibility });
+
+    if (isWindows) {
+      toast.success('设置成功', {
+        closeButton: true,
+        description: '重新打开阅读器窗口后生效',
+        duration: Infinity,
+        action: {
+          label: '立即重启',
+          onClick: () => invoke('reopen_reader_window'),
+        },
+      });
+    }
   });
 
   useFormWatch(form, 'always_on_top', (alwaysOnTop) => {
@@ -67,16 +80,18 @@ const WindowSettingsForm: React.FC<SubFormProps> = (props) => {
             <FormItem className="flex items-center justify-between">
               <div className="space-y-1">
                 <FormLabel>
-                  是否显示 Dock 图标
+                  是否显示任务栏/Dock 栏图标
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <HelpCircle size={14} className="text-muted-foreground" />
                     </TooltipTrigger>
-                    <TooltipContent>仅在 macOS 生效</TooltipContent>
+                    <TooltipContent>
+                      在 Windows 下，需要重新打开窗口才会生效
+                    </TooltipContent>
                   </Tooltip>
                 </FormLabel>
                 <FormDescription>
-                  开启后，应用程序图标将始终显示在 Dock 栏
+                  开启后，应用程序图标将始终显示在任务栏/Dock 栏
                 </FormDescription>
               </div>
               <FormControl>
