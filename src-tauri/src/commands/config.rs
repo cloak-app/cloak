@@ -11,7 +11,7 @@ use crate::utils::{
 };
 use serde_json::Value;
 use std::sync::Mutex;
-use tauri::{ActivationPolicy, Emitter, Manager};
+use tauri::{Emitter, Manager};
 use tauri_plugin_autostart::ManagerExt;
 
 /* ---------------------------------- 偏好设置 ---------------------------------- */
@@ -91,6 +91,8 @@ pub fn set_dock_visibility(
 
     #[cfg(target_os = "macos")]
     {
+        use tauri::ActivationPolicy;
+
         let activation_policy = if dock_visibility {
             ActivationPolicy::Regular
         } else {

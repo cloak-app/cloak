@@ -16,7 +16,7 @@ use tauri::{
     is_dev,
     menu::{MenuBuilder, MenuItemBuilder},
     tray::TrayIconBuilder,
-    ActivationPolicy, Manager, RunEvent,
+    Manager, RunEvent,
 };
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_log::fern::colors::ColoredLevelConfig;
@@ -158,6 +158,8 @@ pub fn run() {
             /* ---------------------------------- 系统设置 ---------------------------------- */
             #[cfg(target_os = "macos")]
             {
+                use tauri::ActivationPolicy;
+
                 let dock_visibility =
                     get_from_app_store::<bool>(app.handle(), AppStoreKey::DockVisibility).unwrap();
 
