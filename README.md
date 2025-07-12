@@ -22,6 +22,7 @@ Go to the [Release page](https://github.com/cloak-app/cloak/releases) to downloa
 
 - [x] Transparent background
 - [x] Import `TXT` novel files.
+- [x] Import `EPUB` novel files
 - [x] Chapter parsing
 - [x] Chapter search/Chapter jump
 - [x] Automatically save reading progress
@@ -38,9 +39,9 @@ Go to the [Release page](https://github.com/cloak-app/cloak/releases) to downloa
 
 ### Unimplemented Features (In Progress)
 
-- [ ] Import `EPUB` novel files
 - [ ] Support for custom chapter parsing regular expressions
 - [ ] i18n(currently only supports Chinese)
+- [ ] transparent editor(write your own novel)
 
 ### Supported Platforms
 
