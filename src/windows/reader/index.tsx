@@ -91,7 +91,7 @@ export default function ReaderWindow() {
         {!reader ? <p>请从托盘菜单打开一本小说</p> : null}
         {reader && line ? line : null}
         {reader && reader.read_progress === 100 && !line ? '（已读完）' : null}
-        {isFocus && (
+        {reader && isFocus && (
           <div className="text-center text-sm text-muted-foreground mt-1">
             <p>{reader?.current_chapter.title}</p>
             <p>
@@ -100,7 +100,7 @@ export default function ReaderWindow() {
             </p>
           </div>
         )}
-        {!readingMode ? (
+        {reader && !readingMode ? (
           <p className="text-center text-sm text-destructive mt-1">
             阅读模式未开启
           </p>
