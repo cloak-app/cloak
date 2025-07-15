@@ -45,40 +45,38 @@ pub const DEFAULT_FONT_COLOR: &str = "#000000";
 // 字间距
 pub const DEFAULT_LETTER_SPACING: f64 = 0.0;
 
-
 // 下一行快捷键
 #[cfg(target_os = "macos")]
 pub const DEFAULT_NEXT_LINE_SHORTCUT: &str = "Control+Alt+ArrowRight";
-#[cfg(any(target_os = "windows", target_os = "linux"))]
+#[cfg(not(target_os = "macos"))]
 pub const DEFAULT_NEXT_LINE_SHORTCUT: &str = "Control+ArrowRight";
 
 // 上一行快捷键
 #[cfg(target_os = "macos")]
 pub const DEFAULT_PREV_LINE_SHORTCUT: &str = "Control+Alt+ArrowLeft";
-#[cfg(any(target_os = "windows", target_os = "linux"))]
+#[cfg(not(target_os = "macos"))]
 pub const DEFAULT_PREV_LINE_SHORTCUT: &str = "Control+ArrowLeft";
 
 // 下一章节快捷键
 #[cfg(target_os = "macos")]
 pub const DEFAULT_NEXT_CHAPTER_SHORTCUT: &str = "Control+Alt+ArrowDown";
-#[cfg(any(target_os = "windows", target_os = "linux"))]
+#[cfg(not(target_os = "macos"))]
 pub const DEFAULT_NEXT_CHAPTER_SHORTCUT: &str = "Control+ArrowDown";
 
 // 上一章节快捷键
 #[cfg(target_os = "macos")]
 pub const DEFAULT_PREV_CHAPTER_SHORTCUT: &str = "Control+Alt+ArrowUp";
-#[cfg(any(target_os = "windows", target_os = "linux"))]
+#[cfg(not(target_os = "macos"))]
 pub const DEFAULT_PREV_CHAPTER_SHORTCUT: &str = "Control+ArrowUp";
 
 // 老板键快捷键
 #[cfg(target_os = "macos")]
 pub const DEFAULT_BOSS_KEY_SHORTCUT: &str = "Control+Alt+Enter";
-#[cfg(any(target_os = "windows", target_os = "linux"))]
+#[cfg(not(target_os = "macos"))]
 pub const DEFAULT_BOSS_KEY_SHORTCUT: &str = "Control+Enter";
 
 // 切换阅读模式快捷键
 #[cfg(target_os = "macos")]
 pub const DEFAULT_TOGGLE_READING_MODE_SHORTCUT: &str = "Control+Alt+Backslash";
-#[cfg(any(target_os = "windows", target_os = "linux"))]
+#[cfg(not(target_os = "macos"))]
 pub const DEFAULT_TOGGLE_READING_MODE_SHORTCUT: &str = "Control+Backslash";
-
