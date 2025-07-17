@@ -15,6 +15,7 @@ use tauri::{
     Manager, RunEvent,
 };
 use tauri_plugin_autostart::MacosLauncher;
+use tauri_plugin_dialog::{DialogExt, MessageDialogButtons, MessageDialogKind};
 use tauri_plugin_log::fern::colors::ColoredLevelConfig;
 
 use crate::{
@@ -223,6 +224,14 @@ pub fn run() {
                 .build(app)?;
 
             app.manage(menu);
+
+            /* --------------------------------- 启动完成弹窗 --------------------------------- */
+            app.dialog()
+                .message("应用已启动，请从托盘打开窗口")
+                .kind(MessageDialogKind::Info)
+                .title("温馨提示")
+                .buttons(MessageDialogButtons::OkCustom("知道了".to_string()))
+                .show(|_| {});
 
             Ok(())
         })
