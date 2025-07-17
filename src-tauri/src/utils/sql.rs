@@ -10,20 +10,23 @@ pub async fn add_novel(
     path: &str,
     file_size: i64,
 ) -> Result<(), String> {
-    sqlx::query(
-        "INSERT INTO novel (title, cover, author, description, path, read_position, read_progress, file_size) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
-    )
-    .bind(title)
-    .bind(cover)
-    .bind(author)
-    .bind(description)
-    .bind(path)
-    .bind(0)
-    .bind(0)
-    .bind(file_size)
-    .execute(db)
-    .await
-    .map_err(|e| format!("添加小说失败: {}", e))?;
+    let sql = r#"
+        INSERT INTO novel (
+            title, cover, author, description, path, read_position, read_progress, file_size
+        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+    "#;
+    sqlx::query(sql)
+        .bind(title)
+        .bind(cover)
+        .bind(author)
+        .bind(description)
+        .bind(path)
+        .bind(0)
+        .bind(0)
+        .bind(file_size)
+        .execute(db)
+        .await
+        .map_err(|e| format!("添加小说失败: {}", e))?;
 
     Ok(())
 }

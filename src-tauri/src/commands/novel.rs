@@ -45,17 +45,19 @@ pub async fn add_novel(
         return Err(format!("文件格式不支持: {filename}"));
     }
 
-    // 检查文件编码格式是否受支持
-    let file = File::open(path).map_err(|e| e.to_string())?;
-    let mut buf_reader = BufReader::new(file);
-    let mut buffer = Vec::new();
+    if extension == "txt" {
+        // 检查文件编码格式是否受支持
+        let file = File::open(path).map_err(|e| e.to_string())?;
+        let mut buf_reader = BufReader::new(file);
+        let mut buffer = Vec::new();
 
-    buf_reader
-        .read_to_end(&mut buffer)
-        .map_err(|e| e.to_string())?;
+        buf_reader
+            .read_to_end(&mut buffer)
+            .map_err(|e| e.to_string())?;
 
-    let result = from_bytes(&buffer, None);
-    result.get_best().ok_or("文件编码不支持")?;
+        let result = from_bytes(&buffer, None);
+        result.get_best().ok_or("文件编码不支持")?;
+    }
 
     // 将文件复制到应用程序目录
     let app_data_dir = app_handle
