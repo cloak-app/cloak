@@ -1,13 +1,15 @@
-use crate::commands::reader;
-use crate::db::Db;
-use crate::state::model::AppState;
-use crate::state::toggle_reading_mode;
-use crate::store::get_from_app_store;
-use crate::store::model::AppStoreKey;
-use crate::utils::window::{hide_all_windows, show_all_windows};
 use std::sync::Mutex;
+
 use tauri::{AppHandle, Manager};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
+
+use crate::{
+    commands::reader,
+    db::Db,
+    state::{model::AppState, toggle_reading_mode},
+    store::{get_from_app_store, model::AppStoreKey},
+    utils::window::{hide_all_windows, show_all_windows},
+};
 
 #[derive(Debug)]
 pub enum AppShortcut {

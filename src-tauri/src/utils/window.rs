@@ -1,6 +1,6 @@
-use crate::store::get_from_app_store;
-use crate::store::model::AppStoreKey;
 use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindowBuilder};
+
+use crate::store::{get_from_app_store, model::AppStoreKey};
 
 pub fn destroy_reader_window(app_handle: &AppHandle) -> Result<(), String> {
     let window = app_handle.get_webview_window("reader");

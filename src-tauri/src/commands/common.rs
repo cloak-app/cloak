@@ -1,6 +1,8 @@
-use crate::state::model::AppState;
 use std::sync::Mutex;
+
 use tauri::Manager;
+
+use crate::state::model::AppState;
 
 #[tauri::command]
 pub fn get_reading_mode(app_handle: tauri::AppHandle) -> Result<bool, String> {

@@ -1,11 +1,22 @@
-use crate::constants::event::*;
-use crate::db::{model::Novel, Db};
-use crate::state::model::AppState;
-use crate::store::{get_from_app_store, model::AppStoreKey};
-use crate::utils::{reader::NovelReader, sql};
+use std::{
+    fs,
+    fs::File,
+    io::{BufReader, Read},
+    path::Path,
+    sync::Mutex,
+};
+
+use charset_normalizer_rs::from_bytes;
 use epub::doc::EpubDoc;
-use std::{fs, path::Path, sync::Mutex};
 use tauri::{Emitter, Manager};
+
+use crate::{
+    constants::event::*,
+    db::{model::Novel, Db},
+    state::model::AppState,
+    store::{get_from_app_store, model::AppStoreKey},
+    utils::{reader::NovelReader, sql},
+};
 
 #[tauri::command]
 pub async fn add_novel(
@@ -34,6 +45,18 @@ pub async fn add_novel(
         return Err(format!("文件格式不支持: {filename}"));
     }
 
+    // 检查文件编码格式是否受支持
+    let file = File::open(path).map_err(|e| e.to_string())?;
+    let mut buf_reader = BufReader::new(file);
+    let mut buffer = Vec::new();
+
+    buf_reader
+        .read_to_end(&mut buffer)
+        .map_err(|e| e.to_string())?;
+
+    let result = from_bytes(&buffer, None);
+    result.get_best().ok_or("文件编码不支持")?;
+
     // 将文件复制到应用程序目录
     let app_data_dir = app_handle
         .path()
@@ -59,10 +82,9 @@ pub async fn add_novel(
         (None, None, None)
     };
 
-    let new_path_str = match new_path.to_str() {
-        Some(v) => v,
-        None => return Err(format!("文件路径转换失败: {new_path:?}")),
-    };
+    let new_path_str = new_path
+        .to_str()
+        .ok_or_else(|| format!("文件路径转换失败: {new_path:?}"))?;
 
     let file_size = filepath
         .metadata()
@@ -105,19 +127,22 @@ pub async fn open_novel(
     id: i64,
 ) -> Result<(), String> {
     let novel = sql::get_novel_by_id(&db, id).await?;
+
+    {
+        let line_size = get_from_app_store::<usize>(&app_handle, AppStoreKey::LineSize).unwrap();
+
+        // 创建 reader 并更新状态
+        let reader = NovelReader::new(
+            novel.id,
+            novel.path,
+            novel.read_position as usize,
+            line_size,
+        )?;
+        let mut state = state.lock().map_err(|e| e.to_string())?;
+        state.novel_reader = Some(reader);
+    }
+
     sql::open_novel(&db, id).await?;
-    let line_size = get_from_app_store::<usize>(&app_handle, AppStoreKey::LineSize).unwrap();
-
-    // 创建 reader 并更新状态
-    let reader = NovelReader::new(
-        novel.id,
-        novel.path,
-        novel.read_position as usize,
-        line_size,
-    )?;
-
-    let mut state = state.lock().map_err(|e| e.to_string())?;
-    state.novel_reader = Some(reader);
 
     app_handle.emit(READER_CHANGE, ()).unwrap();
 

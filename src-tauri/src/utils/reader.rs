@@ -1,9 +1,14 @@
+use std::{
+    fs::File,
+    io::{BufReader, Read},
+};
+
+use charset_normalizer_rs::{from_bytes, utils::decode};
+use encoding::types::DecoderTrap;
 use epub::doc::EpubDoc;
 use regex::Regex;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize, Serializer};
-use std::fs::File;
-use std::io::{BufRead, BufReader};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Chapter {
@@ -193,18 +198,26 @@ struct TxtReader;
 impl FileReader for TxtReader {
     fn read_lines(path: &str, line_size: usize) -> Result<Vec<Line>, String> {
         let file = File::open(path).map_err(|e| e.to_string())?;
-        let buf_reader = BufReader::new(file);
+        let mut buf_reader = BufReader::new(file);
+        let mut buffer = Vec::new();
+
+        buf_reader
+            .read_to_end(&mut buffer)
+            .map_err(|e| e.to_string())?;
+
+        let result = from_bytes(&buffer, None);
+        let encoding = result.get_best().ok_or("无法检测文件编码")?.encoding();
+
+        let decoded_string = decode(&buffer, encoding, DecoderTrap::Replace, false, false)?;
 
         let mut lines: Vec<Line> = Vec::new();
 
         let chapter_regex = Regex::new(r"^(第[零一二三四五六七八九十百千万1-9]+章.*)$").unwrap();
 
-        for line in buf_reader.lines() {
-            let line_string = line.map_err(|e| e.to_string())?;
-            let lin_str = line_string.trim();
-
+        for line in decoded_string.lines() {
+            let line = line.trim();
             // 如果是章节，直接添加行
-            let captures = chapter_regex.captures(lin_str);
+            let captures = chapter_regex.captures(line);
 
             // 是章节
             if let Some(captures) = captures {
@@ -213,25 +226,15 @@ impl FileReader for TxtReader {
                     content: captures[1].to_string(),
                 });
             } else {
-                let mut temp_line = String::new();
-
-                for ele in lin_str.chars() {
-                    temp_line.push(ele);
-                    if temp_line.chars().count() >= line_size {
+                line.chars()
+                    .collect::<Vec<_>>()
+                    .chunks(line_size)
+                    .for_each(|chunk| {
                         lines.push(Line {
                             is_chapter: false,
-                            content: temp_line,
+                            content: chunk.iter().collect(),
                         });
-                        temp_line = String::new();
-                    }
-                }
-
-                if temp_line.chars().count() > 0 {
-                    lines.push(Line {
-                        is_chapter: false,
-                        content: temp_line,
                     });
-                }
             }
         }
 
@@ -276,25 +279,16 @@ impl FileReader for EpubReader {
                     let line_string = line.text().collect::<Vec<_>>().join("");
                     let line_str = line_string.trim();
 
-                    let mut temp_line = String::new();
-
-                    for ele in line_str.chars() {
-                        temp_line.push(ele);
-                        if temp_line.chars().count() >= line_size {
+                    line_str
+                        .chars()
+                        .collect::<Vec<_>>()
+                        .chunks(line_size)
+                        .for_each(|chunk| {
                             lines.push(Line {
                                 is_chapter: false,
-                                content: temp_line,
+                                content: chunk.iter().collect(),
                             });
-                            temp_line = String::new();
-                        }
-                    }
-
-                    if temp_line.chars().count() > 0 {
-                        lines.push(Line {
-                            is_chapter: false,
-                            content: temp_line,
                         });
-                    }
                 }
             }
         }

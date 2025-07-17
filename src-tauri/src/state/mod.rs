@@ -1,11 +1,17 @@
 pub mod model;
 
-use crate::constants::event::*;
-use crate::state::model::AppState;
-use crate::utils::icon::*;
-use crate::utils::shortcut::{self, AppShortcut};
 use std::sync::Mutex;
+
 use tauri::{menu::Menu, AppHandle, Emitter, Manager, Wry};
+
+use crate::{
+    constants::event::*,
+    state::model::AppState,
+    utils::{
+        icon::*,
+        shortcut::{self, AppShortcut},
+    },
+};
 
 pub fn toggle_reading_mode(app_handle: &AppHandle) -> Result<(), String> {
     let state = app_handle.state::<Mutex<AppState>>();

@@ -5,13 +5,9 @@ mod state;
 mod store;
 mod utils;
 
-use crate::commands::{common, config, novel, os, reader, window};
-use crate::db::setup_db;
-use crate::state::{model::AppState, toggle_reading_mode};
-use crate::store::{get_from_app_store, init_app_store, model::AppStoreKey};
-use crate::utils::{icon::*, reader::NovelReader, shortcut, sql, update::UpdateChecker, window::*};
-use log::LevelFilter;
 use std::sync::Mutex;
+
+use log::LevelFilter;
 use tauri::{
     is_dev,
     menu::{MenuBuilder, MenuItemBuilder},
@@ -20,6 +16,14 @@ use tauri::{
 };
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_log::fern::colors::ColoredLevelConfig;
+
+use crate::{
+    commands::{common, config, novel, os, reader, window},
+    db::setup_db,
+    state::{model::AppState, toggle_reading_mode},
+    store::{get_from_app_store, init_app_store, model::AppStoreKey},
+    utils::{icon::*, reader::NovelReader, shortcut, sql, update::UpdateChecker, window::*},
+};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {

@@ -1,9 +1,13 @@
-use crate::constants::event::*;
-use crate::db::Db;
-use crate::state::model::AppState;
-use crate::utils::{reader::NovelReader, sql};
 use std::sync::Mutex;
+
 use tauri::Emitter;
+
+use crate::{
+    constants::event::*,
+    db::Db,
+    state::model::AppState,
+    utils::{reader::NovelReader, sql},
+};
 
 #[tauri::command]
 pub async fn get_novel_reader(

@@ -1,13 +1,13 @@
-use crate::constants::event::*;
-use crate::state::model::AppState;
-use crate::utils::window::open_update_window;
+use std::sync::Mutex;
+
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
-use std::sync::Mutex;
 use tauri::{async_runtime::JoinHandle, AppHandle, Emitter, Manager};
 use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
 use tauri_plugin_updater::{Update, UpdaterExt};
 use tokio::time::{sleep_until, Duration, Instant};
+
+use crate::{constants::event::*, state::model::AppState, utils::window::open_update_window};
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum CheckUpdateStatus {

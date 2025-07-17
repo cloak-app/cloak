@@ -1,5 +1,4 @@
-use crate::db::model::Novel;
-use crate::db::Db;
+use crate::db::{model::Novel, Db};
 
 // 新增小说
 pub async fn add_novel(

@@ -1,18 +1,20 @@
-use crate::constants::event::*;
-use crate::db::Db;
-use crate::state::model::AppState;
-use crate::store::{
-    get_entries_from_app_store, model::AppStoreKey, reset_app_store, set_to_app_store,
-};
-use crate::utils::{
-    reader::NovelReader,
-    shortcut, sql,
-    update::{UpdateCheckResult, UpdateChecker},
-};
-use serde_json::Value;
 use std::sync::Mutex;
+
+use serde_json::Value;
 use tauri::{Emitter, Manager};
 use tauri_plugin_autostart::ManagerExt;
+
+use crate::{
+    constants::event::*,
+    db::Db,
+    state::model::AppState,
+    store::{get_entries_from_app_store, model::AppStoreKey, reset_app_store, set_to_app_store},
+    utils::{
+        reader::NovelReader,
+        shortcut, sql,
+        update::{UpdateCheckResult, UpdateChecker},
+    },
+};
 
 /* ---------------------------------- 偏好设置 ---------------------------------- */
 #[tauri::command]
